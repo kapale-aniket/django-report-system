@@ -1,0 +1,63 @@
+/* Certificate verification page */
+
+.cert-verify-scan {
+  padding: 1.1rem 1.25rem;
+  border: 1px dashed rgba(45, 90, 71, 0.35);
+  border-radius: var(--app-radius, 0.75rem);
+  background: color-mix(in srgb, var(--terra-parchment, #f7f3eb) 55%, transparent);
+}
+
+.cert-verify-scan-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: var(--terra-forest, #2d5a47);
+}
+
+.cert-verify-scan-desc {
+  font-size: 0.8125rem;
+  color: var(--app-muted, #6b6560);
+  margin-bottom: 0.85rem;
+}
+
+.cert-scan-status {
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.55rem;
+  font-size: 0.8125rem;
+}
+
+.cert-scan-status--info {
+  background: rgba(74, 124, 89, 0.1);
+  color: var(--terra-forest, #2d5a47);
+}
+
+.cert-scan-status--success {
+  background: rgba(74, 124, 89, 0.14);
+  color: var(--terra-forest, #2d5a47);
+}
+
+.cert-scan-status--danger {
+  background: rgba(220, 53, 69, 0.1);
+  color: #842029;
+}
+
+.cert-verify-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--app-muted, #6b6560);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cert-verify-divider::before,
+.cert-verify-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(45, 90, 71, 0.15);
+}

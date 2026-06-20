@@ -1,0 +1,51 @@
+{% extends 'base_auth.html' %}
+{% load static rf_ui %}
+{% block title %}Teacher sign up{% endblock %}
+{% block extra_css %}
+{% include 'partials/auth_select2_assets.html' %}
+{% endblock %}
+{% block outer %}
+<div class="auth-shell" style="max-width: 520px;">
+  {% include 'partials/auth_topbar.html' %}
+  <div class="auth-card-portal p-4 p-md-5">
+    <a href="{% url 'accounts:register_hub' %}" class="auth-back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i> Sign up options</a>
+    <div class="text-center mb-4">
+      <div class="auth-brand-mark mx-auto mb-3">RF</div>
+      <span class="auth-role-pill mb-2 d-inline-flex"><i class="bi bi-easel2" aria-hidden="true"></i> Teacher</span>
+      <h1 class="auth-portal-title h4 fw-bold mb-2">Create teacher account</h1>
+      <p class="auth-lead small mb-0">An administrator must approve your account before you can sign in.</p>
+    </div>
+    {% include 'partials/messages.html' %}
+    <form method="post" class="app-form-loading auth-input-wrap">
+      {% csrf_token %}
+      {% form_errors_toast form %}
+      {% for field in form %}
+      <div class="form-floating mb-3">
+        {{ field }}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary w-100 auth-submit-btn mt-2">Create account</button>
+    </form>
+    <div class="auth-divider"><span>already registered?</span></div>
+    <p class="text-center mb-0">
+      <a href="{% url 'accounts:login' %}" class="fw-semibold text-decoration-none" style="color: var(--ap-primary);">Sign in</a>
+    </p>
+    <p class="text-center small auth-lead mt-3 mb-0">
+      <a href="{% url 'dashboard:landing' %}" class="text-decoration-none" style="color: var(--ap-muted);">Home</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<script src="{% static 'js/rf_table.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.ReportFlowTable && window.ReportFlowTable.initSelect2) {
+    window.ReportFlowTable.initSelect2(document);
+  }
+});
+</script>
+{% endblock %}

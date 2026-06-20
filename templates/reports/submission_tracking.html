@@ -1,0 +1,27 @@
+{% extends 'app_base.html' %}
+{% block title %}Submission tracking{% endblock %}
+{% block page_title %}Submission tracking{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="app-card h-100">
+      <div class="app-card-header">Submitted ({{ submitted|length }})</div>
+      <ul class="list-group list-group-flush">
+        {% for s in submitted %}
+        <li class="list-group-item bg-transparent small">{{ s.username }} · {{ s.get_full_name }} · {{ s.department|default:"—" }}</li>
+        {% empty %}<li class="list-group-item text-muted">None</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="app-card h-100">
+      <div class="app-card-header text-warning">No report yet ({{ pending|length }})</div>
+      <ul class="list-group list-group-flush">
+        {% for s in pending %}
+        <li class="list-group-item bg-transparent small">{{ s.username }} · {{ s.get_full_name }} · {{ s.department|default:"—" }}</li>
+        {% empty %}<li class="list-group-item text-muted">All students submitted.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

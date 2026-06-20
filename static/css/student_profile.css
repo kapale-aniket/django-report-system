@@ -1,0 +1,101 @@
+.student-profile-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+}
+
+.student-profile-hero__glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(74, 124, 89, 0.18), transparent 45%),
+    radial-gradient(circle at 10% 90%, rgba(45, 90, 71, 0.12), transparent 40%);
+  pointer-events: none;
+}
+
+.student-profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, var(--terra-forest), var(--terra-moss));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 12px 28px rgba(45, 90, 71, 0.22);
+}
+
+.student-profile-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+.student-profile-avatar__initials {
+  color: #fff;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.student-profile-hero__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.student-profile-stat {
+  cursor: default;
+  transform: none;
+}
+
+.student-profile-stat:hover {
+  transform: none;
+  box-shadow: var(--app-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+}
+
+.student-profile-table thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--app-muted, #6c757d);
+  border-bottom-width: 1px;
+  white-space: nowrap;
+}
+
+.student-profile-public-page {
+  background:
+    linear-gradient(180deg, rgba(45, 90, 71, 0.06) 0%, var(--app-bg, #f8f9fa) 240px),
+    var(--app-bg, #f8f9fa);
+  min-height: 100vh;
+}
+
+@media (max-width: 767.98px) {
+  .student-profile-hero__actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .student-profile-hero__actions .btn {
+    width: 100%;
+  }
+}
+
+.group-member-profile-card {
+  border: 1px solid var(--app-border, rgba(0, 0, 0, 0.08));
+  border-radius: 16px;
+  padding: 1rem;
+  background: var(--app-surface, #fff);
+}
+
+.group-member-profile-card__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+
+.group-member-profile-card__avatar .student-profile-avatar__initials {
+  font-size: 1.1rem;
+}

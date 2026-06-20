@@ -1,0 +1,102 @@
+{% extends 'app_base.html' %}
+{% load static %}
+{% block title %}Student dashboard{% endblock %}
+{% block page_title %}Student dashboard{% endblock %}
+{% block content %}
+{% if announcements %}
+<div class="terra-announcement">{% for a in announcements %}<div class="mb-1"><strong>{{ a.title }}</strong> — {{ a.message|truncatechars:200 }}</div>{% endfor %}</div>
+{% endif %}
+<div class="row g-3 g-xl-4 mb-4">
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:my_reports' %}" title="View all my reports">
+      <div class="app-stat-icon app-stat-icon--primary"><i class="bi bi-folder2-open"></i></div>
+      <div class="app-stat-label">My reports</div>
+      <div class="app-stat-value">{{ total_reports }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:my_reports' %}?status=pending" title="View pending reports">
+      <div class="app-stat-icon app-stat-icon--warning"><i class="bi bi-hourglass-split"></i></div>
+      <div class="app-stat-label">Pending</div>
+      <div class="app-stat-value">{{ pending_count }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:my_reports' %}?status=approved" title="View approved reports">
+      <div class="app-stat-icon app-stat-icon--success"><i class="bi bi-check-circle"></i></div>
+      <div class="app-stat-label">Approved</div>
+      <div class="app-stat-value">{{ approved_count }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:my_reports' %}?status=rejected" title="View rejected reports">
+      <div class="app-stat-icon app-stat-icon--danger"><i class="bi bi-x-circle"></i></div>
+      <div class="app-stat-label">Rejected</div>
+      <div class="app-stat-value">{{ rejected_count }}</div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="app-stat-card" href="{% url 'reports:leaderboard' %}" title="View class leaderboard">
+      <div class="app-stat-icon app-stat-icon--primary"><i class="bi bi-trophy"></i></div>
+      <div class="app-stat-label">Class rank (by avg marks)</div>
+      <div class="app-stat-value">{% if student_rank == "—" %}—{% else %}#{{ student_rank }}{% endif %} <span class="fs-6 text-muted">/ {{ total_students_ranked }}</span></div>
+    </a>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a class="btn btn-app-primary btn-primary" href="{% url 'reports:submit' %}"><i class="bi bi-cloud-arrow-up me-1"></i>Submit new report</a>
+  <a class="btn btn-outline-primary rounded-3 px-4" href="{% url 'reports:my_reports' %}"><i class="bi bi-list-ul me-1"></i>View all reports</a>
+  <a class="btn btn-outline-secondary rounded-3 px-4" href="{% url 'reports:leaderboard' %}"><i class="bi bi-trophy me-1"></i>Leaderboard</a>
+</div>
+{% if recently_viewed %}
+<div class="app-card mb-4">
+  <div class="app-card-header">Recently viewed</div>
+  <ul class="list-group list-group-flush">
+    {% for r in recently_viewed %}
+    <li class="list-group-item bg-transparent"><a href="{% url 'reports:detail' r.pk %}">{{ r.title|truncatechars:50 }}</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="app-card">
+  <div class="app-card-header">Recent submissions</div>
+  <ul class="list-group list-group-flush">
+    {% for r in recent_reports %}
+    <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-4 bg-transparent">
+      <div>
+        <a class="fw-semibold text-decoration-none" href="{% url 'reports:detail' r.pk %}">{{ r.title }}</a>
+        <div class="small text-muted">{{ r.submitted_at|date:"M d, Y" }}{% if r.is_late_submission %} · <span class="text-warning">Late</span>{% endif %}</div>
+      </div>
+      {% if r.status == 'pending' %}
+        {% if r.teacher_approved %}<span class="badge rounded-pill badge-status-pending">Awaiting admin</span>{% else %}<span class="badge rounded-pill badge-status-pending">Pending</span>{% endif %}
+      {% elif r.status == 'approved' %}
+        <span class="badge rounded-pill badge-status-approved">Approved</span>
+      {% else %}
+        <span class="badge rounded-pill badge-status-rejected">Rejected</span>
+      {% endif %}
+    </li>
+    {% empty %}
+    <li class="list-group-item text-muted py-4 text-center">No reports yet. Submit your first project report.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% include 'dashboard/partials/certificate_celebration_modal.html' %}
+{% endblock %}
+
+{% block extra_css %}
+{% if certificate_celebration %}
+<link rel="stylesheet" href="{% static 'css/certificate_celebration.css' %}">
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if certificate_celebration %}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="{% static 'js/certificate_celebration.js' %}"></script>
+{% endif %}
+{% endblock %}

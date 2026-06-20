@@ -1,0 +1,28 @@
+{% load static %}
+<nav class="app-bottom-nav d-lg-none" aria-label="Mobile navigation">
+  <div class="app-bottom-nav__inner">
+    <a class="app-bottom-nav__link {% if app_nav_section == 'dashboard' %}active{% endif %}" href="{% url app_dashboard_url %}">
+      <i class="bi bi-house-door" aria-hidden="true"></i>
+      <span>Home</span>
+    </a>
+    {% if user.role == 'student' %}
+    <a class="app-bottom-nav__link {% if app_nav_section == 'submit' or app_nav_section == 'my_reports' %}active{% endif %}" href="{% url 'reports:my_reports' %}">
+      <i class="bi bi-folder2-open" aria-hidden="true"></i>
+      <span>Reports</span>
+    </a>
+    {% else %}
+    <a class="app-bottom-nav__link {% if app_nav_section == 'reports' %}active{% endif %}" href="{% url 'reports:list' %}">
+      <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+      <span>Reports</span>
+    </a>
+    {% endif %}
+    <a class="app-bottom-nav__link {% if app_nav_section == 'messages' %}active{% endif %}" href="{% url 'messaging:inbox' %}">
+      <i class="bi bi-envelope" aria-hidden="true"></i>
+      <span>Messages</span>
+    </a>
+    <button type="button" class="app-bottom-nav__link" id="appBottomNavMore" aria-label="Open menu">
+      <i class="bi bi-grid" aria-hidden="true"></i>
+      <span>More</span>
+    </button>
+  </div>
+</nav>

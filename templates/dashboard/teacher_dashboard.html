@@ -1,0 +1,180 @@
+{% extends 'app_base.html' %}
+{% block title %}Teacher dashboard{% endblock %}
+{% block page_title %}Teacher dashboard{% endblock %}
+{% block content %}
+{% if announcements %}
+<div class="terra-announcement">{% for a in announcements %}<div class="mb-1"><strong>{{ a.title }}</strong> — {{ a.message|truncatechars:200 }}</div>{% endfor %}</div>
+{% endif %}
+<div class="row g-3 g-xl-4 mb-4">
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}" title="View all assigned reports">
+      <div class="app-stat-icon app-stat-icon--primary"><i class="bi bi-files"></i></div>
+      <div class="app-stat-label">Total reports</div>
+      <div class="app-stat-value">{{ assigned_reports }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=awaiting_teacher" title="Reports awaiting your review">
+      <div class="app-stat-icon app-stat-icon--warning"><i class="bi bi-person-check"></i></div>
+      <div class="app-stat-label">Awaiting your review</div>
+      <div class="app-stat-value">{{ pending_teacher }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=awaiting_admin" title="Reports awaiting admin approval">
+      <div class="app-stat-icon app-stat-icon--info"><i class="bi bi-shield-check"></i></div>
+      <div class="app-stat-label">Awaiting admin</div>
+      <div class="app-stat-value">{{ awaiting_admin }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=approved" title="View approved reports">
+      <div class="app-stat-icon app-stat-icon--success"><i class="bi bi-check-circle"></i></div>
+      <div class="app-stat-label">Approved (all)</div>
+      <div class="app-stat-value">{{ approved_all }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=rejected" title="View rejected reports">
+      <div class="app-stat-icon app-stat-icon--danger"><i class="bi bi-x-circle"></i></div>
+      <div class="app-stat-label">Rejected (all)</div>
+      <div class="app-stat-value">{{ rejected_all }}</div>
+    </a>
+  </div>
+</div>
+
+{% if pending_teacher %}
+<div class="mb-4">
+  <a class="btn btn-app-primary btn-primary rounded-3 px-4" href="{% url 'reports:list' %}?status=awaiting_teacher">
+    <i class="bi bi-person-check me-1"></i>Review {{ pending_teacher }} pending report{{ pending_teacher|pluralize }}
+  </a>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="app-card">
+      <div class="app-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>Monthly submissions</span>
+        <span class="small text-muted">Click a bar to view that month</span>
+      </div>
+      <div class="app-card-body">
+        <div class="app-chart-box app-chart-box--tall app-chart-box--clickable">
+          <canvas id="chartTeacher"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="app-card">
+      <div class="app-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>Approved vs pending</span>
+        <span class="small text-muted">Click a segment to filter reports</span>
+      </div>
+      <div class="app-card-body">
+        <div class="app-chart-box app-chart-box--tall app-chart-box--clickable">
+          <canvas id="chartTeacherStatus"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const primary = '#2d5a47';
+  const moss = '#4a7c59';
+  const clay = '#c4784a';
+  const reportsListUrl = '{{ reports_list_url|escapejs }}';
+  const chartMonthUrls = {{ chart_month_urls_json|safe }};
+  const chartRangeFrom = '{{ chart_range_from|escapejs }}';
+  const chartRangeTo = '{{ chart_range_to|escapejs }}';
+
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+
+  function buildReportsFilterUrl(params) {
+    const query = new URLSearchParams(params);
+    return reportsListUrl + '?' + query.toString();
+  }
+
+  new Chart(document.getElementById('chartTeacher'), {
+    type: 'bar',
+    data: {
+      labels: {{ chart_labels_json|safe }},
+      datasets: [{
+        label: 'Submissions',
+        data: {{ chart_values_json|safe }},
+        backgroundColor: 'rgba(45, 90, 71, 0.75)',
+        borderRadius: 8,
+        hoverBackgroundColor: 'rgba(45, 90, 71, 0.95)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onHover: function (event, elements) {
+        event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+      },
+      onClick: function (event, elements) {
+        if (!elements.length) return;
+        var index = elements[0].index;
+        var targetUrl = chartMonthUrls[index];
+        if (targetUrl) window.location.href = targetUrl;
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            afterLabel: function () {
+              return 'Click to view reports for this month';
+            }
+          }
+        }
+      }
+    }
+  });
+
+  (function () {
+    var appr = {{ chart_approved_json|safe }};
+    var pend = {{ chart_pending_json|safe }};
+    function sum(arr) { return arr.reduce(function (a, b) { return a + b; }, 0); }
+    var statusUrls = [
+      buildReportsFilterUrl({ status: 'approved', date_from: chartRangeFrom, date_to: chartRangeTo }),
+      buildReportsFilterUrl({ status: 'pending', date_from: chartRangeFrom, date_to: chartRangeTo }),
+    ];
+    new Chart(document.getElementById('chartTeacherStatus'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Approved (6 mo)', 'Pending (6 mo)'],
+        datasets: [{
+          data: [sum(appr), sum(pend)],
+          backgroundColor: ['rgba(74, 124, 89, 0.8)', 'rgba(196, 120, 74, 0.85)'],
+          hoverBackgroundColor: ['rgba(74, 124, 89, 1)', 'rgba(196, 120, 74, 1)'],
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onHover: function (event, elements) {
+          event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+        },
+        onClick: function (event, elements) {
+          if (!elements.length) return;
+          var targetUrl = statusUrls[elements[0].index];
+          if (targetUrl) window.location.href = targetUrl;
+        },
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              afterLabel: function () {
+                return 'Click to view matching reports';
+              }
+            }
+          }
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+/* Global loading overlay + inline button states */
+.rf-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+
+.rf-loader__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 36, 32, 0.28);
+  backdrop-filter: blur(2px);
+}
+
+[data-bs-theme='dark'] .rf-loader__backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.rf-loader__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 9rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--app-radius-lg, 16px);
+  background: var(--app-surface, #fffcf7);
+  border: 1px solid var(--app-border, rgba(45, 90, 71, 0.12));
+  box-shadow: var(--app-shadow-md, 0 8px 24px rgba(30, 61, 48, 0.1));
+}
+
+.rf-loader__spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--app-primary, #2d5a47) !important;
+}
+
+.rf-loader__text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--app-text, #2c2825);
+  text-align: center;
+}
+
+.rf-loader__subtext {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--app-muted, #6b6560);
+  text-align: center;
+  max-width: 16rem;
+  line-height: 1.4;
+}
+
+body.rf-loading-active {
+  cursor: progress;
+}
+
+body.rf-loading-active .app-layout,
+body.rf-loading-active .auth-shell,
+body.rf-loading-active .landing-page > .container,
+body.rf-loading-active .lp-header {
+  pointer-events: none;
+  user-select: none;
+}
+
+.rf-btn-loading,
+.rf-btn-loading:disabled {
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.rf-inline-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}

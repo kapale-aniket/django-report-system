@@ -1,0 +1,9 @@
+{# Filter toolbar — Clear only; filters auto-apply via rf_filters.js #}
+<div class="rf-filter-actions {% if actions_col_class %}{{ actions_col_class }}{% else %}col-md-2{% endif %}">
+  {% if show_filter_label %}
+  <label class="form-label small fw-semibold text-muted mb-1 d-none d-md-block">&nbsp;</label>
+  {% endif %}
+  <div class="d-flex gap-2 {% if actions_align == 'end' %}justify-content-md-end{% endif %}">
+    <a href="{% if clear_href %}{{ clear_href }}{% else %}{{ clear_url|default:request.path }}{% endif %}" class="btn {% if btn_sm %}btn-sm {% endif %}btn-outline-secondary rounded-3 {% if actions_full_width %}w-100{% endif %}" title="Clear all filters">Clear</a>
+  </div>
+</div>

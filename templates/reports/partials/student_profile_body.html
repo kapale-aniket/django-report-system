@@ -1,0 +1,187 @@
+{% load static %}
+<div class="student-profile">
+  <div class="student-profile-hero app-card mb-4">
+    <div class="student-profile-hero__glow" aria-hidden="true"></div>
+    <div class="app-card-body p-4 p-lg-5">
+      <div class="d-flex flex-wrap align-items-start gap-4">
+        <div class="student-profile-avatar" aria-hidden="true">
+          {% if student.profile_photo %}
+          <img src="{{ student.profile_photo.url }}" alt="" class="student-profile-avatar__img">
+          {% else %}
+          <span class="student-profile-avatar__initials">{{ student.first_name|default:student.username|slice:":1"|upper }}{{ student.last_name|slice:":1"|upper|default:"" }}</span>
+          {% endif %}
+        </div>
+        <div class="flex-grow-1 min-w-0">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <h1 class="h3 fw-bold mb-0">{{ student.get_full_name|default:student.username }}</h1>
+            <span class="badge rounded-pill text-bg-secondary">Student</span>
+            {% if not student.is_active %}
+            <span class="badge rounded-pill badge-status-pending">Pending activation</span>
+            {% endif %}
+          </div>
+          <p class="text-muted mb-2"><i class="bi bi-at me-1"></i>@{{ student.username }}</p>
+          <div class="d-flex flex-wrap gap-3 small text-muted">
+            {% if student.department %}
+            <span><i class="bi bi-building me-1"></i>{{ student.department }}</span>
+            {% endif %}
+            {% if student.roll_number %}
+            <span><i class="bi bi-hash me-1"></i>{{ student.roll_number }}</span>
+            {% endif %}
+            {% if staff_view and student.email %}
+            <span><i class="bi bi-envelope me-1"></i>{{ student.email }}</span>
+            {% endif %}
+            {% if student.date_joined %}
+            <span><i class="bi bi-calendar-plus me-1"></i>Joined {{ student.date_joined|date:"M Y" }}</span>
+            {% endif %}
+          </div>
+          {% if student.assigned_teacher %}
+          <p class="small mb-0 mt-3">
+            <i class="bi bi-person-badge me-1 text-primary"></i>
+            <strong>Assigned teacher:</strong> {{ student.assigned_teacher.get_full_name|default:student.assigned_teacher.username }}
+          </p>
+          {% endif %}
+        </div>
+        <div class="student-profile-hero__actions">
+          <a class="btn btn-outline-secondary rounded-3" href="{{ back_url }}">
+            <i class="bi bi-arrow-left me-1"></i>{{ back_label }}
+          </a>
+          {% if not staff_view %}
+          <span class="badge rounded-pill text-bg-light border mt-2 d-block text-center">Public portfolio</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="app-stat-card student-profile-stat h-100">
+        <div class="app-stat-icon app-stat-icon--primary"><i class="bi bi-folder2-open"></i></div>
+        <div class="app-stat-label">Projects</div>
+        <div class="app-stat-value">{{ stats.total }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="app-stat-card student-profile-stat h-100">
+        <div class="app-stat-icon app-stat-icon--success"><i class="bi bi-check-circle"></i></div>
+        <div class="app-stat-label">Approved</div>
+        <div class="app-stat-value">{{ stats.approved }}</div>
+      </div>
+    </div>
+    {% if staff_view %}
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="app-stat-card student-profile-stat h-100">
+        <div class="app-stat-icon app-stat-icon--warning"><i class="bi bi-hourglass-split"></i></div>
+        <div class="app-stat-label">Pending</div>
+        <div class="app-stat-value">{{ stats.pending }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="app-stat-card student-profile-stat h-100">
+        <div class="app-stat-icon app-stat-icon--danger"><i class="bi bi-x-circle"></i></div>
+        <div class="app-stat-label">Rejected</div>
+        <div class="app-stat-value">{{ stats.rejected }}</div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="app-stat-card student-profile-stat h-100">
+        <div class="app-stat-icon app-stat-icon--info"><i class="bi bi-graph-up"></i></div>
+        <div class="app-stat-label">Avg marks</div>
+        <div class="app-stat-value">{% if stats.avg_marks %}{{ stats.avg_marks|floatformat:0 }}{% else %}—{% endif %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+      <div class="app-stat-card student-profile-stat h-100">
+        <div class="app-stat-icon app-stat-icon--success"><i class="bi bi-award"></i></div>
+        <div class="app-stat-label">Certificates</div>
+        <div class="app-stat-value">{{ stats.certificates }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card">
+    <div class="app-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <span><i class="bi bi-journal-text me-1"></i>{% if staff_view %}All project reports{% else %}Approved projects{% endif %}</span>
+      {% if staff_view and stats.late %}
+      <span class="badge rounded-pill text-bg-warning">{{ stats.late }} late submission{{ stats.late|pluralize }}</span>
+      {% endif %}
+    </div>
+    <div class="app-card-body p-0">
+      {% if reports %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 student-profile-table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              {% if staff_view %}<th>Status</th>{% endif %}
+              <th>Marks</th>
+              {% if staff_view %}<th>Teacher / Admin</th>{% endif %}
+              <th>Submitted</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reports %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ r.title }}</div>
+                <div class="small text-muted">
+                  {% if r.academic_year %}{{ r.academic_year }}{% endif %}
+                  {% if r.tags %} · {{ r.tags }}{% endif %}
+                  {% if r.group %} · <i class="bi bi-people"></i> {{ r.group.name }}{% endif %}
+                </div>
+              </td>
+              {% if staff_view %}
+              <td>
+                <span class="badge rounded-pill text-bg-{{ r.status_definition.badge_class }}">
+                  {% if r.status_definition.icon %}<i class="bi {{ r.status_definition.icon }} me-1"></i>{% endif %}
+                  {{ r.status_definition.label }}
+                </span>
+                {% if r.is_late_submission %}<span class="badge rounded-pill badge-status-pending ms-1">Late</span>{% endif %}
+              </td>
+              {% endif %}
+              <td>
+                <div class="small"><strong>Final:</strong> {{ r.marks|default:"—" }}</div>
+                {% if staff_view and r.teacher_marks is not None %}
+                <div class="small text-muted">Teacher: {{ r.teacher_marks }}</div>
+                {% endif %}
+              </td>
+              {% if staff_view %}
+              <td class="small">
+                <div><i class="bi bi-person-check me-1"></i>{% if r.teacher_approved %}<span class="text-success">Yes</span>{% else %}<span class="text-muted">No</span>{% endif %}</div>
+                <div><i class="bi bi-shield-check me-1"></i>{% if r.admin_approved %}<span class="text-success">Yes</span>{% else %}<span class="text-muted">No</span>{% endif %}</div>
+              </td>
+              {% endif %}
+              <td class="small text-muted">{{ r.submitted_at|date:"M d, Y" }}</td>
+              <td class="text-end">
+                {% if staff_view %}
+                <a class="btn btn-sm btn-outline-primary rounded-3" href="{% url 'reports:detail' r.pk %}?next={{ request.get_full_path|urlencode }}">
+                  <i class="bi bi-eye me-1"></i>View
+                </a>
+                {% elif r.certificate_verification_code %}
+                <a class="btn btn-sm btn-outline-success rounded-3" href="{% url 'certificates:verify' %}?code={{ r.certificate_verification_code|urlencode }}&amp;next={{ request.get_full_path|urlencode }}">
+                  <i class="bi bi-patch-check me-1"></i>Verify
+                </a>
+                {% else %}
+                <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 px-3 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+        {% if staff_view %}
+        <p class="mb-0">No project reports submitted yet.</p>
+        {% else %}
+        <p class="mb-0">No approved projects published on this portfolio yet.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

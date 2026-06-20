@@ -1,0 +1,90 @@
+{% extends 'app_base.html' %}
+{% block title %}Manage project groups{% endblock %}
+{% block page_title %}Edit group teachers{% endblock %}
+{% block content %}
+<p class="text-muted mb-4">Assign or change the faculty guide for each group. Teachers are filtered by the group department. All members are notified when you save a change.</p>
+
+<form method="get" class="app-card mb-4">
+  <div class="app-card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold text-muted mb-1">Department filter</label>
+        <input type="text" name="department" value="{{ department_filter }}" class="form-control rounded-3" placeholder="Department name">
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary rounded-3">Filter</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="app-card">
+  <div class="app-card-header">Project groups</div>
+  <div class="app-card-body p-0">
+    {% if rows %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Department</th>
+            <th>Members</th>
+            <th>Current teacher</th>
+            <th>Submission</th>
+            <th style="min-width: 300px;">Edit teacher</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          {% with group=row.group %}
+          <tr>
+            <td>
+              <strong>{{ group.name }}</strong>
+              <div class="small text-muted">Created {{ group.created_at|date:"M j, Y" }}</div>
+            </td>
+            <td>{{ group.department|default:"—" }}</td>
+            <td>{{ group.member_total|default:group.member_count }}</td>
+            <td>
+              {% if group.assigned_teacher %}
+              {{ group.assigned_teacher.get_full_name|default:group.assigned_teacher.username }}
+              {% if group.assigned_teacher.department %}
+              <div class="small text-muted">{{ group.assigned_teacher.department }}</div>
+              {% endif %}
+              {% else %}
+              <span class="text-muted">Not assigned</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if group.has_active_submission %}
+              <span class="badge text-bg-success">Submitted</span>
+              {% else %}
+              <span class="badge text-bg-secondary">Not submitted</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="post" action="{% url 'reports:project_group_assign_teacher' group.pk %}" class="d-flex gap-2 align-items-center">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <select name="teacher_id" class="form-select form-select-sm rounded-3 rf-select2" aria-label="Edit teacher for {{ group.name }}">
+                  <option value="">No teacher</option>
+                  {% for teacher in row.teachers %}
+                  <option value="{{ teacher.pk }}" {% if group.assigned_teacher_id == teacher.pk %}selected{% endif %}>
+                    {{ teacher.get_full_name|default:teacher.username }}{% if teacher.department %} · {{ teacher.department }}{% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-app-primary btn-primary rounded-3">Save</button>
+              </form>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="p-4 mb-0 text-muted">No project groups found.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

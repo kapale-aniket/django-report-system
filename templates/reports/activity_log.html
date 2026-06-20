@@ -1,0 +1,42 @@
+{% extends 'app_base.html' %}
+{% block title %}Audit log{% endblock %}
+{% block page_title %}Activity log{% endblock %}
+{% block content %}
+<form method="get" class="app-card mb-3">
+  <div class="app-card-body py-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-2">{{ filter_form.user_search }}</div>
+      <div class="col-md-2">{{ filter_form.action }}</div>
+      <div class="col-md-2">{{ filter_form.date_from }}</div>
+      <div class="col-md-2">{{ filter_form.date_to }}</div>
+      <div class="col-md-2">{{ filter_form.search }}</div>
+      {% include 'partials/rf_table_sort_fields.html' %}
+      {% url 'reports:activity_log' as activity_log_clear_url %}
+      {% include 'partials/rf_filter_actions.html' with clear_url=activity_log_clear_url show_filter_icon=False actions_full_width=True show_filter_label=True %}
+    </div>
+  </div>
+</form>
+<div class="app-card">
+  <div class="rf-table-panel" data-rf-table="server">
+  <div class="app-table-wrap table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead><tr><th>When</th><th>Action</th><th>User</th><th>Report</th><th>Detail</th></tr></thead>
+      <tbody>
+        {% for log in page_obj %}
+        <tr>
+          <td class="small text-muted">{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+          <td><span class="badge text-bg-secondary">{{ log.get_action_display }}</span></td>
+          <td class="small">{% if log.user %}{{ log.user.username }}{% else %}—{% endif %}</td>
+          <td class="small">{% if log.report_id %}#{{ log.report_id }}{% else %}—{% endif %}</td>
+          <td class="small">{{ log.detail|truncatechars:120 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No logs.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'partials/pagination.html' with page_obj=page_obj filter_querystring=filter_querystring %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2d5a47">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <title>{% block title %}Dashboard{% endblock %} · ReportFlow</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
+  <link rel="stylesheet" href="{% static 'css/terra.css' %}">
+  <link rel="stylesheet" href="{% static 'css/toast.css' %}">
+  <link rel="stylesheet" href="{% static 'css/loader.css' %}">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/rf_select2.css' %}">
+  {% if user.is_authenticated %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+  {% endif %}
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="app-body terra-theme">
+  {% include 'partials/toast_stack.html' %}
+  {% include 'partials/app_loader.html' %}
+
+  <div class="app-layout">
+    {% include 'partials/app_sidebar.html' %}
+
+    <div class="app-main">
+      <header class="app-topnav">
+        <button type="button" class="app-topnav-menu-btn" id="appSidebarOpen" aria-label="Open menu" aria-expanded="false" aria-controls="appSidebar">
+          <i class="bi bi-list app-topnav-menu-icon-open" aria-hidden="true"></i>
+          <i class="bi bi-x-lg app-topnav-menu-icon-close" aria-hidden="true"></i>
+        </button>
+        <h1 class="app-page-title text-truncate">{% block page_title %}Dashboard{% endblock %}</h1>
+        {% include 'partials/app_navbar_actions.html' %}
+      </header>
+
+      <div class="app-content" id="appPageMain">
+        {% include 'partials/messages.html' %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+
+  {% include 'partials/app_bottom_nav.html' %}
+
+  {% include 'partials/profile_modal.html' %}
+  {% block modals %}{% endblock %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+  <script src="{% static 'js/toast.js' %}"></script>
+  <script src="{% static 'js/loader.js' %}"></script>
+  <script src="{% static 'js/required_field_labels.js' %}"></script>
+  <script src="{% static 'js/rf_table.js' %}"></script>
+  <script src="{% static 'js/rf_filters.js' %}"></script>
+  <script src="{% static 'js/dashboard.js' %}"></script>
+  <script src="{% static 'js/password_toggle.js' %}"></script>
+  <script src="{% static 'js/auth_guard.js' %}"></script>
+  <script src="{% static 'js/app_modals.js' %}"></script>
+  <script src="{% static 'js/api_client.js' %}"></script>
+  {% if user.is_authenticated %}
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+  <script src="{% static 'js/profile.js' %}"></script>
+  {% endif %}
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

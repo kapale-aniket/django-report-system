@@ -1,0 +1,29 @@
+{% extends 'app_base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb mb-0 small">
+    <li class="breadcrumb-item"><a href="{% url 'accounts:post_login_redirect' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Notifications</li>
+  </ol>
+</nav>
+<form method="post" action="{% url 'reports:notifications_mark_all_read' %}" class="mb-3" data-ajax="true" data-api-url="/api/v1/reports/notifications/mark-all-read/" data-api-reload="true">{% csrf_token %}
+  <button type="submit" class="btn btn-sm btn-outline-primary rounded-3">Mark all read</button>
+</form>
+<div class="app-card">
+  <ul class="list-group list-group-flush">
+    {% for n in page_obj %}
+    <li class="list-group-item bg-transparent py-0 {% if not n.is_read %}border-start border-3 border-primary{% endif %}">
+      <a href="{% url 'reports:notification_open' n.pk %}" class="d-flex justify-content-between align-items-start gap-3 py-3 text-decoration-none text-body">
+        <div class="small flex-grow-1 {% if not n.is_read %}fw-semibold{% endif %}">{{ n.message|linebreaksbr }}</div>
+        <div class="text-nowrap text-muted small">{{ n.created_at|date:"M d, H:i" }}</div>
+      </a>
+    </li>
+    {% empty %}
+    <li class="list-group-item text-muted py-5 text-center">No notifications.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% include 'partials/pagination.html' with page_obj=page_obj filter_querystring=filter_querystring %}
+{% endblock %}

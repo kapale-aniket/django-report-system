@@ -1,0 +1,536 @@
+{% extends 'app_base.html' %}
+{% load static %}
+{% block title %}{{ report.title }}{% endblock %}
+{% block page_title %}Report detail{% endblock %}
+{% block content %}
+
+<div class="mb-3">
+  <a class="btn btn-outline-secondary rounded-3" href="{% if user.role == 'student' %}{% url 'reports:my_reports' %}{% else %}{% url 'reports:list' %}{% endif %}">
+    <i class="bi bi-arrow-left me-1"></i>{% if user.role == 'student' %}Back to my reports{% else %}Back to all reports{% endif %}
+  </a>
+</div>
+
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb mb-0 small">
+    <li class="breadcrumb-item"><a href="{% if user.role == 'student' %}{% url 'reports:my_reports' %}{% else %}{% url 'reports:list' %}{% endif %}">Reports</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ report.title|truncatechars:40 }}</li>
+  </ol>
+</nav>
+
+{% include 'partials/terra_workflow_stepper.html' %}
+
+{% if report.is_deleted %}
+<div class="alert alert-warning py-2 mb-3"><i class="bi bi-trash3 me-1"></i>This report is in the trash (soft-deleted).{% if user.role == 'admin' %}
+  <form method="post" action="{% url 'reports:restore' report.pk %}" class="d-inline ms-2" data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/restore/" data-api-reload="true">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success rounded-3">Restore</button></form>
+{% endif %}</div>
+{% endif %}
+{% if report.is_pinned %}<div class="alert alert-info border-0 py-2 mb-3"><i class="bi bi-pin-angle-fill me-1"></i>Pinned by administration</div>{% endif %}
+{% if report.group %}<p class="small text-muted mb-2"><i class="bi bi-people me-1"></i><strong>{{ report.group.name }}</strong> — {% for m in report.group.members.all %}{{ m.get_full_name|default:m.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+{% if announcements %}
+<div class="terra-announcement mb-3">{% for a in announcements %}<div class="mb-1"><strong>{{ a.title }}</strong> — {{ a.message|truncatechars:160 }}</div>{% endfor %}</div>
+{% endif %}
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="app-card h-100">
+      <div class="app-card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-2">
+          <div>
+            <h2 class="h4 fw-bold mb-2">{{ report.title }}</h2>
+            <p class="text-muted mb-1"><i class="bi bi-person me-1"></i>{{ report.student.get_full_name|default:report.student.username }}{% if report.student.department %} · {{ report.student.department }}{% endif %}</p>
+            <p class="text-muted small mb-1"><i class="bi bi-calendar3 me-1"></i>{{ report.submitted_at|date:"M d, Y H:i" }}{% if report.is_late_submission %} · <span class="badge badge-status-pending rounded-pill">Late</span>{% endif %}</p>
+            <p class="small mb-0 text-muted">Round: <span class="text-body text-capitalize">{{ report.submission_round }}</span>
+              · Attempts: {{ report.attempt_count }}/{{ report_max_attempts|default:settings.max_attempts }}
+              {% if report.tags %}· Tags: {{ report.tags }}{% endif %}
+              {% if report.is_locked %}· <span class="badge bg-secondary">Locked</span>{% endif %}
+            </p>
+            {% if report.teacher_marks is not None or report.marks is not None %}
+            <p class="small mt-2 mb-0"><strong>Teacher marks:</strong> {{ report.teacher_marks|default:"—" }} · <strong>Final marks:</strong> {{ report.marks|default:"—" }}</p>
+            {% endif %}
+            {% if report.feedback and user.role != 'student' %}
+            <div class="terra-feedback-quote small"><strong>Feedback:</strong> {{ report.feedback|linebreaksbr }}</div>
+            {% endif %}
+          </div>
+          <div>
+            {% if report.status_definition %}
+              <span class="badge rounded-pill fs-6 text-bg-{{ report.status_definition.badge_class }}">{% if report.status_definition.icon %}<i class="bi {{ report.status_definition.icon }} me-1"></i>{% endif %}{{ report.status_definition.label }}</span>
+            {% elif report.status == 'pending' %}
+              {% if report.teacher_approved %}<span class="badge rounded-pill badge-status-pending fs-6">Awaiting admin</span>{% else %}<span class="badge rounded-pill badge-status-pending fs-6">Pending</span>{% endif %}
+            {% elif report.status == 'approved' %}
+              <span class="badge rounded-pill badge-status-approved fs-6">Approved</span>
+            {% else %}
+              <span class="badge rounded-pill badge-status-rejected fs-6">Rejected</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3 align-items-center app-action-row">
+          <a class="btn btn-outline-primary rounded-3" href="{% url 'reports:pdf' report.pk %}" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>{% if report.is_pdf_file %}Open in tab{% else %}Download document{% endif %}</a>
+          <a class="btn btn-outline-secondary rounded-3" href="{% url 'reports:print' report.pk %}" target="_blank"><i class="bi bi-printer me-1"></i>Print view</a>
+          {% if user.role == 'admin' %}
+          <form method="post" action="{% url 'reports:toggle_pin' report.pk %}" class="d-inline" data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/pin/" data-api-reload="true">{% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm rounded-3"><i class="bi bi-pin-angle"></i> {% if report.is_pinned %}Unpin{% else %}Pin{% endif %}</button>
+          </form>
+          {% endif %}
+          {% if report.is_certificate_eligible %}
+          <a class="btn btn-app-primary btn-primary rounded-3" href="{% url 'reports:certificate' report.pk %}" data-rf-download-loader data-loader-message="Preparing download…"><i class="bi bi-download me-1"></i>Download certificate</a>
+          {% if user_certificate_code %}
+          <a class="btn btn-outline-primary rounded-3" href="{% url 'certificates:verify' %}?code={{ user_certificate_code|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"><i class="bi bi-qr-code me-1"></i>Verify</a>
+          {% endif %}
+          {% elif report.status == 'approved' and user.role == 'student' and not report.is_final_submission %}
+          <span class="badge text-bg-secondary align-self-center">Certificate pending — teacher did not mark as final submission</span>
+          {% endif %}
+          {% if user.is_authenticated %}
+          <form method="post" action="{% url 'reports:bookmark' report.pk %}" class="d-inline" data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/bookmark/" data-api-reload="true">{% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary rounded-3"><i class="bi {% if bookmarked %}bi-bookmark-fill{% else %}bi-bookmark{% endif %} me-1"></i>{% if bookmarked %}Saved{% else %}Bookmark{% endif %}</button>
+          </form>
+          {% if report.group %}
+          <a class="btn btn-outline-info btn-sm rounded-3" href="{% url 'reports:group_member_profiles' report.pk %}?next={{ request.get_full_path|urlencode }}"><i class="bi bi-people me-1"></i>Student profiles</a>
+          {% else %}
+          <a class="btn btn-outline-info btn-sm rounded-3" href="{% url 'reports:public_student' report.student.username %}?next={{ request.get_full_path|urlencode }}"><i class="bi bi-person-vcard me-1"></i>Student profile</a>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="app-card h-100">
+      <div class="app-card-header">Approval workflow</div>
+      <div class="app-card-body terra-progress">
+        <div class="progress mb-3" style="height:10px;" title="Progress">
+          <div class="progress-bar bg-success" role="progressbar" style="width: {% if report.status == 'approved' %}100{% elif report.teacher_approved %}55{% else %}25{% endif %}%"></div>
+        </div>
+        <p class="small text-muted mb-2">Submitted → Teacher review → Admin approval</p>
+        <p class="mb-2"><strong>{% if report.group %}Group faculty guide{% else %}Project teacher{% endif %}:</strong>
+          {% if report_assigned_teacher %}
+            {{ group_assigned_teacher_label|default:report_assigned_teacher.get_full_name|default:report_assigned_teacher.username }}
+            {% if report.group and report_assigned_teacher.department %}
+            <span class="text-muted">({{ report_assigned_teacher.department }})</span>
+            {% endif %}
+          {% else %}
+            <span class="text-muted">Not assigned</span>
+          {% endif %}
+        </p>
+        {% if user.role == 'admin' %}
+        <form method="post" action="{% url 'reports:assign_teacher' report.pk %}" class="mb-3" data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/assign-teacher/" data-api-reload="true">
+          {% csrf_token %}
+          <label class="form-label small fw-semibold" for="reportAssignTeacher">
+            {% if report.group %}Edit group teacher{% else %}Assign teacher for this project{% endif %}
+          </label>
+          <div class="d-flex gap-2">
+            <select name="teacher_id" id="reportAssignTeacher" class="form-select form-select-sm rounded-3 rf-select2">
+              <option value="">— None —</option>
+              {% for teacher in report_teachers %}
+              <option value="{{ teacher.pk }}" {% if report_assigned_teacher and report_assigned_teacher.pk == teacher.pk %}selected{% endif %}>
+                {{ teacher.get_full_name|default:teacher.username }}{% if teacher.department %} · {{ teacher.department }}{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-primary rounded-3">Save</button>
+          </div>
+          {% if report.group %}
+          <p class="small text-muted mb-0 mt-2">
+            Changes apply to the whole group and active submission. Members are notified with the teacher name and department.
+            <a href="{% url 'reports:project_groups_admin' %}">Manage all groups</a>
+          </p>
+          {% else %}
+          <p class="small text-muted mb-0 mt-2">Each project can have a different teacher. Students may belong to multiple group and individual projects.</p>
+          {% endif %}
+        </form>
+        {% endif %}
+        <p class="mb-2"><strong>Teacher:</strong> {% if report.teacher_approved %}<span class="text-success"><i class="bi bi-check-circle-fill"></i> Approved</span>{% else %}<span class="text-muted">Pending</span>{% endif %}</p>
+        <p class="mb-2"><strong>Admin:</strong> {% if report.admin_approved %}<span class="text-success"><i class="bi bi-check-circle-fill"></i> Approved</span>{% else %}<span class="text-muted">Pending</span>{% endif %}</p>
+        {% if report.is_final_submission %}
+        <p class="mb-2 small"><span class="badge text-bg-success"><i class="bi bi-patch-check me-1"></i>Final submission</span></p>
+        {% elif report.teacher_approved %}
+        <p class="mb-2 small text-muted">Not marked as final submission — no completion certificate.</p>
+        {% endif %}
+        {% if report.status == 'rejected' and report.rejection_reason %}
+        <div class="alert alert-danger small mb-0 mt-3"><strong>Reason:</strong> {{ report.rejection_reason }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if report.is_certificate_eligible and user.role == 'student' and can_download_certificate %}
+<div class="app-card mb-4 border-success">
+  <div class="app-card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div>
+      <h3 class="h6 fw-bold mb-1"><i class="bi bi-award me-1 text-success"></i>Project completed</h3>
+      <p class="small text-muted mb-0">
+        {% if report.group %}
+        Your group project has been fully approved. Download <strong>your</strong> personalized certificate (PDF) with your name{% if user.roll_number %}, roll number{% endif %}, and verification QR.
+        {% else %}
+        Your project has been fully approved. Download your official completion certificate (PDF).
+        {% endif %}
+      </p>
+    </div>
+    <a class="btn btn-success rounded-3" href="{% url 'reports:certificate' report.pk %}" data-rf-download-loader data-loader-message="Preparing download…"><i class="bi bi-download me-1"></i>Download my certificate</a>
+    {% if user_certificate_code %}
+    <a class="btn btn-outline-success rounded-3" href="{% url 'certificates:verify' %}?code={{ user_certificate_code|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"><i class="bi bi-qr-code me-1"></i>Verify my QR</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if user.role == 'student' %}
+<div class="app-card mb-4 terra-panel-accent" id="teacherFeedbackPanel">
+  <div class="app-card-header d-flex align-items-center gap-2">
+    <i class="bi bi-chat-left-text"></i>
+    <span>Teacher comments &amp; feedback</span>
+  </div>
+  <div class="app-card-body">
+    {% if staff_comments %}
+      <div class="app-chat">
+        {% for c in staff_comments %}
+        <div class="app-chat-bubble app-chat-bubble--staff">
+          <div class="app-chat-meta">{{ c.user.get_full_name|default:c.user.username }} ({{ c.user.get_role_display }}) · {{ c.created_at|date:"M d, H:i" }}</div>
+          {{ c.message|linebreaksbr }}
+        </div>
+        {% endfor %}
+      </div>
+    {% elif report.feedback %}
+      <div class="terra-feedback-quote">{{ report.feedback|linebreaksbr }}</div>
+    {% elif report.status == 'rejected' and report.rejection_reason %}
+      <div class="alert alert-danger small mb-0"><strong>Reason for rejection:</strong> {{ report.rejection_reason|linebreaksbr }}</div>
+    {% else %}
+      <p class="text-muted mb-0">Your teacher has not left any comments on this report yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if rubric_rows %}
+<div class="app-card mb-4">
+  <div class="app-card-header">Rubric evaluation</div>
+  <div class="app-card-body p-0">
+    <table class="table table-sm mb-0">
+      <tbody>
+        {% for row in rubric_rows %}
+        <tr><td>{{ row.criterion.name }}</td><td class="text-end">{{ row.score }} / {{ row.max_score }}</td></tr>
+        {% endfor %}
+        <tr class="table-light fw-semibold"><td>Total</td><td class="text-end">{{ report.total_rubric_score }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="app-card mb-4">
+  <div class="app-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span>Document preview</span>
+    {% if user.role == 'teacher' or user.role == 'admin' %}
+    <span id="reportAiOcrBadge" class="badge rounded-pill text-bg-secondary">
+      {% if report.ocr_verification_json.verified %}<i class="bi bi-shield-check me-1"></i>Text verified{% elif report.ai_processing_status == 'completed' %}<i class="bi bi-exclamation-triangle me-1"></i>Review OCR{% else %}<i class="bi bi-cpu me-1"></i>AI pending{% endif %}
+    </span>
+    {% endif %}
+  </div>
+  <div class="app-card-body p-0">
+    {% if report.is_pdf_file %}
+    <iframe class="app-pdf-frame" src="{% url 'reports:pdf' report.pk %}" title="PDF preview"></iframe>
+    {% else %}
+    <div class="p-4 text-center text-muted">
+      <i class="bi bi-file-earmark-word fs-1 d-block mb-2"></i>
+      <p class="mb-3">DOCX files cannot be previewed in the browser.</p>
+      <a class="btn btn-outline-primary rounded-3" href="{% url 'reports:pdf' report.pk %}"><i class="bi bi-download me-1"></i>Download DOCX</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if user.role == 'teacher' or user.role == 'admin' %}
+<div class="app-card mb-4 terra-panel-accent" id="reportAiPanel"
+     data-report-id="{{ report.pk }}"
+     data-auto-load="{% if report.ai_processing_status == 'completed' %}true{% else %}false{% endif %}">
+  <div class="app-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span><i class="bi bi-stars me-1"></i>AI report review</span>
+    <span class="small text-muted" id="reportAiStatus">{{ report.ai_processing_status }}{% if report.ai_analysis_json.provider %} · {{ report.ai_analysis_json.provider }}{% endif %}</span>
+  </div>
+  <div class="app-card-body">
+    <p class="small text-muted mb-2">Summarize the report, verify extracted text (PDF OCR), and draft rubric scores. Teachers must review and edit before approving.</p>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <span id="reportAiOcrStatus" class="badge rounded-pill {% if report.ocr_verification_json.verified %}text-bg-success{% else %}text-bg-warning{% endif %}">
+        {% if report.ocr_verification_json %}OCR {% if report.ocr_verification_json.verified %}verified{% else %}check recommended{% endif %}{% else %}OCR pending{% endif %}
+      </span>
+    </div>
+    <div class="terra-panel-inset small mb-3" id="reportAiSummary">{% if report.ai_analysis_json.summary %}{{ report.ai_analysis_json.summary }}{% else %}Click “Load AI insights” to analyze this report.{% endif %}</div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-outline-primary btn-sm rounded-3" id="reportAiLoadBtn"><i class="bi bi-arrow-repeat me-1"></i>Load AI insights</button>
+      {% if user.role == 'teacher' and report.status == 'pending' and not report.teacher_approved %}
+      <button type="button" class="btn btn-app-primary btn-primary btn-sm rounded-3" id="reportAiApplyBtn" {% if not report.ai_analysis_json.suggested_criterion_scores %}disabled{% endif %}><i class="bi bi-magic me-1"></i>Apply to form</button>
+      {% endif %}
+      <button type="button" class="btn btn-outline-secondary btn-sm rounded-3" id="reportAiRerunBtn"><i class="bi bi-cpu me-1"></i>Re-run analysis</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="app-card mb-4">
+  <div class="app-card-header">Actions</div>
+  <div class="app-card-body d-flex flex-wrap gap-2">
+    {% if user.role == 'teacher' and report.status == 'pending' and not report.is_locked %}
+      {% if not report.teacher_approved %}
+      <form method="post" action="{% url 'reports:teacher_approve' report.pk %}" class="terra-panel-inset w-100" id="teacherApproveForm"
+            data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/teacher-approve/" data-api-reload="true">
+        {% csrf_token %}
+        {% if report.rubric %}
+        <p class="small fw-semibold mb-2">Rubric scores (max per criterion)</p>
+        <div class="row g-2 mb-3">
+          {% for row in rubric_rows %}
+          <div class="col-md-4">
+            <label class="form-label small">{{ row.criterion.name }} (max {{ row.max_score }})</label>
+            <input type="number" name="criterion_{{ row.criterion.pk }}" class="form-control form-control-sm rounded-3" min="0" max="{{ row.max_score }}" value="{{ row.score }}">
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="row g-2 mb-2">
+          <div class="col-md-4"><label class="form-label small fw-semibold">Provisional marks (0–100)</label>{{ teacher_eval_form.teacher_marks }}</div>
+          <div class="col-md-8"><label class="form-label small fw-semibold">Feedback</label>{{ teacher_eval_form.feedback }}</div>
+        </div>
+        <div class="form-check mb-3">
+          {{ teacher_eval_form.is_final_submission }}
+          <label class="form-check-label small" for="{{ teacher_eval_form.is_final_submission.id_for_label }}">
+            {{ teacher_eval_form.is_final_submission.label }}
+          </label>
+        </div>
+        <p class="small text-muted mb-2">Rubric total: <strong>{{ report.total_rubric_score }}</strong></p>
+        <button type="submit" class="btn btn-success rounded-3 app-form-loading"><i class="bi bi-check-lg me-1"></i>Teacher approve</button>
+      </form>
+      <button type="button" class="btn btn-outline-danger rounded-3" data-bs-toggle="modal" data-bs-target="#teacherRejectModal"><i class="bi bi-x-lg me-1"></i>Teacher reject</button>
+      {% else %}
+      <span class="text-muted small align-self-center">Waiting for admin final approval.</span>
+      {% endif %}
+    {% endif %}
+    {% if user.role == 'admin' and report.status == 'pending' and not report.is_locked %}
+      {% if report.teacher_approved %}
+      <form method="post" action="{% url 'reports:admin_approve' report.pk %}" class="terra-panel-inset w-100"
+            data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/admin-approve/" data-api-reload="true">
+        {% csrf_token %}
+        <label class="form-label small fw-semibold">Final marks (0–100)</label>
+        {{ admin_marks_form.marks }}
+        <button type="submit" class="btn btn-app-primary btn-primary rounded-3 app-form-loading mt-2"><i class="bi bi-check-lg me-1"></i>Final approve</button>
+      </form>
+      {% else %}
+      <span class="text-muted small align-self-center">Teacher approval required first.</span>
+      {% endif %}
+      <button type="button" class="btn btn-outline-danger rounded-3" data-bs-toggle="modal" data-bs-target="#adminRejectModal"><i class="bi bi-x-lg me-1"></i>Admin reject</button>
+    {% endif %}
+    {% if can_resubmit %}
+    <div class="w-100 border-top pt-3 mt-1">
+      <form method="post" enctype="multipart/form-data" action="{% url 'reports:resubmit' report.pk %}" class="row g-2 align-items-end app-form-loading"
+            data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/resubmit/" data-api-reload="true">
+        {% csrf_token %}
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">Resubmit revised report (PDF or DOCX)</label>
+          {{ resubmit_form.file }}
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-warning rounded-3 w-100"><i class="bi bi-upload me-1"></i>Resubmit</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+    {% if user.role == 'student' and report.student_id == user.id and report.status != 'approved' %}
+    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-toggle="modal" data-bs-target="#detailDeleteModal"><i class="bi bi-trash me-1"></i>Delete</button>
+    {% elif user.role == 'teacher' or user.role == 'admin' %}
+    <button type="button" class="btn btn-outline-danger rounded-3" data-bs-toggle="modal" data-bs-target="#detailDeleteModal"><i class="bi bi-trash me-1"></i>Delete</button>
+    {% endif %}
+  </div>
+</div>
+
+{% if reeval_admin_queue %}
+<div class="app-card mb-4 border-info">
+  <div class="app-card-header">Re-evaluation requests</div>
+  <div class="app-card-body">
+    {% for req in reeval_admin_queue %}
+    <div class="mb-3 pb-3 border-bottom">
+      <p class="small mb-1"><strong>{{ req.student.username }}</strong> · {{ req.created_at|date:"M d, Y H:i" }}</p>
+      <p class="small">{{ req.reason|linebreaks }}</p>
+      <form method="post" action="{% url 'reports:reeval_resolve' req.pk %}" class="row g-2 align-items-end"
+            data-ajax="true" data-api-url="/api/v1/reports/reeval/{{ req.pk }}/resolve/" data-api-remap="resolve_action:action" data-api-reload="true">
+        {% csrf_token %}
+        <input type="hidden" name="resolve_action" value="approve" />
+        <div class="col-auto"><input type="number" name="updated_marks" class="form-control form-control-sm" min="0" max="100" placeholder="New marks" required /></div>
+        <div class="col-auto"><button type="submit" class="btn btn-sm btn-success rounded-3">Approve &amp; update marks</button></div>
+      </form>
+      <form method="post" action="{% url 'reports:reeval_resolve' req.pk %}" class="mt-2"
+            data-ajax="true" data-api-url="/api/v1/reports/reeval/{{ req.pk }}/resolve/" data-api-remap="resolve_action:action" data-api-reload="true">{% csrf_token %}
+        <input type="hidden" name="resolve_action" value="reject" />
+        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-3">Decline request</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if timeline %}
+<div class="app-card mb-4">
+  <div class="app-card-header">Activity timeline</div>
+  <ul class="list-group list-group-flush">
+    {% for log in timeline %}
+    <li class="list-group-item bg-transparent small">
+      <span class="text-muted">{{ log.timestamp|date:"M d, Y H:i" }}</span>
+      · {{ log.get_action_display }}{% if log.user %} — {{ log.user.get_full_name|default:log.user.username }}{% endif %}
+      {% if log.detail %}<span class="text-muted">({{ log.detail|truncatechars:80 }})</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if user.role == 'student' and report.student_id == user.id and report.status == 'approved' and not pending_reeval %}
+<div class="app-card mb-4">
+  <div class="app-card-header">Request re-evaluation</div>
+  <div class="app-card-body">
+    <form method="post" action="{% url 'reports:reeval_request' report.pk %}" data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/reeval/" data-api-reload="true">{% csrf_token %}
+      {{ reeval_form.reason }}
+      <button type="submit" class="btn btn-outline-primary rounded-3 mt-2">Submit request</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% if versions %}
+<div class="app-card mb-4">
+  <div class="app-card-header d-flex justify-content-between align-items-center">
+    <span>Version history</span>
+    <a class="btn btn-sm btn-outline-primary rounded-3" href="{% url 'reports:version_compare' report.pk %}">Compare side-by-side</a>
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for v in versions %}
+    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+      <span class="small">Version {{ v.version_number }} · {{ v.uploaded_at|date:"M d, Y H:i" }}</span>
+      <a href="{{ v.file.url }}" class="btn btn-sm btn-outline-secondary rounded-3" target="_blank"><i class="bi bi-download"></i></a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if user.role == 'student' and report.status != 'approved' %}
+  {% if pending_extension %}
+  <div class="alert alert-warning py-2 small">Extension request pending admin review.</div>
+  {% else %}
+  <div class="app-card mb-4">
+    <div class="app-card-header">Request deadline extension</div>
+    <div class="app-card-body">
+      <form method="post" action="{% url 'reports:extension_request' report.pk %}" data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/extension/" data-api-reload="true">{% csrf_token %}
+        {{ extension_form.reason }}
+        <button type="submit" class="btn btn-outline-warning btn-sm rounded-3 mt-2">Submit request</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+
+<div class="app-card">
+  <div class="app-card-header">Discussion</div>
+  <div class="app-card-body">
+    <div class="app-chat mb-4">
+      {% for c in report.comments.all %}
+        {% if c.user_id == user.id %}
+        <div class="app-chat-bubble app-chat-bubble--student">
+          <div class="app-chat-meta">You · {{ c.created_at|date:"M d, H:i" }}</div>
+          {{ c.message|linebreaksbr }}
+        </div>
+        {% else %}
+        <div class="app-chat-bubble app-chat-bubble--staff">
+          <div class="app-chat-meta">{{ c.user.get_full_name|default:c.user.username }} ({{ c.user.get_role_display }}) · {{ c.created_at|date:"M d, H:i" }}</div>
+          {{ c.message|linebreaksbr }}
+        </div>
+        {% endif %}
+      {% empty %}
+      <p class="text-muted text-center mb-0 py-3">No comments yet.{% if user.role == 'student' %} Your teacher can leave feedback here.{% endif %}</p>
+      {% endfor %}
+    </div>
+    {% if can_comment %}
+    <form method="post" action="{% url 'reports:comment' report.pk %}" class="app-form-loading"
+          data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/comment/" data-api-reload="true">
+      {% csrf_token %}
+      <label class="form-label fw-semibold">Add a comment</label>
+      {{ comment_form.message }}
+      <button type="submit" class="btn btn-app-primary btn-primary rounded-3 mt-2"><i class="bi bi-send me-1"></i>Send</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if user.role == 'teacher' or user.role == 'admin' %}
+<div class="position-fixed bottom-0 end-0 p-3 d-none d-md-block" style="z-index: 100;">
+  <div class="btn-group-vertical shadow rounded-3 overflow-hidden" id="reportQuickActions">
+    {% if user.role == 'teacher' and report.status == 'pending' and not report.teacher_approved %}
+    <button type="button" class="btn btn-success btn-sm" title="Focus teacher approve (shortcut A)" onclick="document.getElementById('teacherApproveForm')?.scrollIntoView({behavior:'smooth'})">Approve</button>
+    <button type="button" class="btn btn-outline-danger btn-sm" title="Reject (shortcut R)" data-bs-toggle="modal" data-bs-target="#teacherRejectModal">Reject</button>
+    {% endif %}
+    {% if user.role == 'admin' and report.teacher_approved %}
+    <button type="button" class="btn btn-primary btn-sm" onclick="document.querySelector('[action*=admin-approve]')?.closest('form')?.scrollIntoView({behavior:'smooth'})">Final approve</button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/report_ux.js' %}"></script>
+<script src="{% static 'js/report_ai.js' %}"></script>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="teacherRejectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'reports:teacher_reject' report.pk %}" class="app-form-loading"
+            data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/teacher-reject/" data-api-reload="true">
+        {% csrf_token %}
+        <div class="modal-header border-0"><h5 class="modal-title fw-bold">Reject (teacher)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <label class="form-label">Reason</label>
+          <textarea name="reason" class="form-control" rows="3" required placeholder="What should the student fix?"></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger rounded-3">Reject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="adminRejectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'reports:admin_reject' report.pk %}" class="app-form-loading"
+            data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/admin-reject/" data-api-reload="true">
+        {% csrf_token %}
+        <div class="modal-header border-0"><h5 class="modal-title fw-bold">Reject (admin)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <label class="form-label">Reason</label>
+          <textarea name="reason" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger rounded-3">Reject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="detailDeleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'reports:delete' report.pk %}" class="app-form-loading"
+            data-ajax="true" data-api-url="/api/v1/reports/{{ report.pk }}/delete/" data-api-redirect="{% if user.role == 'student' %}/reports/my/{% else %}/reports/list/{% endif %}">
+        {% csrf_token %}
+        <div class="modal-header border-0"><h5 class="modal-title fw-bold">Delete this report?</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body pt-0 text-muted">The report will be hidden (soft delete). Admins can restore it.</div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger rounded-3">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

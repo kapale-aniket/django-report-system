@@ -1,0 +1,172 @@
+{% extends 'app_base.html' %}
+{% load static %}
+{% block title %}Submit report{% endblock %}
+{% block page_title %}Submit report{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-xl-6">
+    <p class="text-muted mb-2">Upload a PDF or DOCX file (max <strong>{{ settings.max_file_size_mb }} MB</strong>).</p>
+    <p class="small text-muted mb-2" id="individualRulesNote">
+      Individual: max <strong>{{ individual_rules.max_attempts }}</strong> attempts · deadline
+      <strong>{{ individual_rules.submission_deadline|date:"M d, Y H:i" }}</strong>
+    </p>
+    <p class="small text-muted mb-2" id="groupRulesNote">
+      Group: max <strong>{{ group_rules.max_attempts }}</strong> attempts · deadline
+      <strong>{{ group_rules.submission_deadline|date:"M d, Y H:i" }}</strong> ·
+      <strong>{{ group_rules.min_members }}–{{ group_rules.max_members }}</strong> members per group
+    </p>
+    <p class="terra-deadline mb-4" id="deadlineCountdown" data-individual-deadline="{{ individual_rules.submission_deadline|date:'c' }}" data-group-deadline="{{ group_rules.submission_deadline|date:'c' }}">Deadline loading…</p>
+    <div class="app-card">
+      <div class="app-card-header">New project report</div>
+      <div class="app-card-body p-4">
+        <form method="post" enctype="multipart/form-data" class="app-form-loading" id="reportSubmitForm" novalidate
+              data-ajax="true" data-api-url="/api/v1/reports/submit/" data-api-method="POST"
+              data-api-redirect="/reports/my/"
+              data-loader-message="Uploading report…"
+              data-loader-submessage="Please wait while your report file is uploaded."
+              data-loader-button-label="Uploading report…"
+              data-loader-immediate="true">
+          {% csrf_token %}
+          <div class="mb-4">
+            <label class="form-label fw-semibold" for="id_title">Project title</label>
+            {{ form.title }}
+            {{ form.title.errors }}
+          </div>
+          <div class="mb-3">
+            <span class="form-label fw-semibold d-block">Submission type</span>
+            <div class="d-flex flex-wrap gap-3">
+              {% for radio in form.submission_type %}
+              <div class="form-check">
+                {{ radio.tag }}
+                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+              </div>
+              {% endfor %}
+            </div>
+            {{ form.submission_type.errors }}
+          </div>
+          <div class="mb-3" id="groupSelectBlock">
+            <label class="form-label fw-semibold" for="id_project_group_id">Project group</label>
+            {{ form.project_group_id }}
+            {{ form.project_group_id.errors }}
+            <p class="small text-muted mb-0 mt-1">
+              Select a group you belong to. The assigned faculty guide (name and department) is shown in the list.
+              Submissions are sent to that teacher for evaluation.
+              <a href="{% url 'reports:project_groups' %}">Manage groups</a>
+            </p>
+            {% if not submittable_groups %}
+            <div class="alert alert-warning small mt-2 mb-0" id="noGroupsAlert">
+              No groups are ready to submit. Create a group, wait for admin to assign a teacher, and ensure no teammate has already submitted for that group.
+            </div>
+            {% endif %}
+          </div>
+          {% if form.tags %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Tags</label>
+            {{ form.tags }}
+          </div>
+          {% endif %}
+          {% if form.academic_year %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="{{ form.academic_year.id_for_label }}">Academic year</label>
+            {{ form.academic_year }}
+            {{ form.academic_year.errors }}
+          </div>
+          {% endif %}
+          <div class="mb-4">
+            <label class="form-label fw-semibold" for="{{ form.file.id_for_label }}">Report document (PDF or DOCX)</label>
+            <label class="app-dropzone" id="report-dropzone" for="{{ form.file.id_for_label }}">
+              <i class="bi bi-cloud-arrow-up fs-1 text-primary d-block mb-2"></i>
+              <span class="text-muted">Drag & drop your PDF or DOCX here, or <strong class="text-primary">browse</strong></span>
+              <div class="app-dropzone-file-name small" id="report-file-name"></div>
+            </label>
+            {{ form.file }}
+            {{ form.file.errors }}
+          </div>
+          <button type="submit" class="btn btn-app-primary btn-primary w-100 py-2">
+            <span class="submit-label"><i class="bi bi-upload me-2"></i>Upload report</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/submit-dropzone.js' %}"></script>
+<script src="{% static 'js/submit_autosave.js' %}"></script>
+<script src="{% static 'js/submit_group.js' %}"></script>
+<script>
+(function () {
+  var el = document.getElementById('deadlineCountdown');
+  if (!el) return;
+  var form = document.getElementById('reportSubmitForm');
+  function selectedSubmissionType() {
+    if (!form) return 'individual';
+    var checked = form.querySelector('input[name="submission_type"]:checked');
+    return checked ? checked.value : 'individual';
+  }
+  function activeDeadlineIso() {
+    return selectedSubmissionType() === 'group'
+      ? el.dataset.groupDeadline
+      : el.dataset.individualDeadline;
+  }
+  function tick() {
+    var iso = activeDeadlineIso();
+    if (!iso) return;
+    var deadline = new Date(iso);
+    var now = new Date();
+    var ms = deadline - now;
+    if (ms <= 0) { el.textContent = 'Deadline has passed — new uploads may be marked late.'; return; }
+    var d = Math.floor(ms / 86400000);
+    var h = Math.floor((ms % 86400000) / 3600000);
+    var m = Math.floor((ms % 3600000) / 60000);
+    el.textContent = 'Time until deadline: ' + d + 'd ' + h + 'h ' + m + 'm';
+  }
+  tick();
+  setInterval(tick, 60000);
+  if (form) {
+    Array.prototype.forEach.call(form.querySelectorAll('input[name="submission_type"]'), function (radio) {
+      radio.addEventListener('change', tick);
+    });
+  }
+})();
+(function () {
+  var form = document.getElementById('reportSubmitForm');
+  if (!form) return;
+
+  function showValidationToast(message) {
+    if (window.ReportFlowToast) {
+      window.ReportFlowToast.warning(message, { title: false });
+    }
+  }
+
+  form.addEventListener('submit', function (e) {
+    var title = form.querySelector('[name="title"]');
+    var year = form.querySelector('[name="academic_year"]');
+    var file = form.querySelector('[name="file"]');
+    var submissionType = form.querySelector('input[name="submission_type"]:checked');
+    var groupSelect = form.querySelector('[name="project_group_id"]');
+    var messages = [];
+
+    if (title && !title.value.trim()) {
+      messages.push('Please enter a project title.');
+    }
+    if (year && !year.value.trim()) {
+      messages.push('Please enter an academic year (e.g. 2025-2026).');
+    }
+    if (file && (!file.files || !file.files.length)) {
+      messages.push('Please choose a PDF or DOCX file before uploading.');
+    }
+    if (submissionType && submissionType.value === 'group' && groupSelect && !groupSelect.value) {
+      messages.push('Please select a project group for a group submission.');
+    }
+
+    if (messages.length) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      showValidationToast(messages.join(' '));
+    }
+  }, true);
+})();
+</script>
+{% endblock %}

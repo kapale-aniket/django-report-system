@@ -1,0 +1,92 @@
+{% if user.is_authenticated %}
+<div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold" id="profileModalLabel">My profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-0">
+        <div class="row g-4">
+          <div class="col-md-4 text-center">
+            <div id="profilePhotoDisplay">
+              <div class="profile-photo-wrap mx-auto mb-3">
+                <img src="" alt="" class="profile-photo-preview d-none" id="profilePhotoPreview">
+                <span class="app-user-avatar profile-photo-fallback" id="profilePhotoFallback">{{ user.get_full_name|default:user.username|slice:":2"|upper }}</span>
+              </div>
+              <label class="btn btn-sm btn-outline-secondary rounded-3 mb-0" for="profilePhotoInput">
+                <i class="bi bi-camera me-1"></i>Change photo
+              </label>
+              <input type="file" class="d-none" id="profilePhotoInput" accept="image/jpeg,image/png,image/webp,image/gif">
+              <p class="small text-muted mt-2 mb-0">JPG, PNG, WEBP or GIF · max 2 MB · square crop</p>
+            </div>
+
+            <div class="profile-photo-crop-panel d-none" id="profilePhotoCropPanel">
+              <div class="profile-photo-crop-stage mx-auto mb-2">
+                <img src="" alt="Crop profile photo" id="profilePhotoCropImage">
+              </div>
+              <p class="small text-muted mb-2">Drag to reposition · scroll or pinch to zoom</p>
+              <div class="d-flex flex-wrap justify-content-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-3" id="profilePhotoCropCancel">
+                  Cancel
+                </button>
+                <button type="button" class="btn btn-sm btn-app-primary btn-primary rounded-3" id="profilePhotoCropApply">
+                  <i class="bi bi-check-lg me-1"></i>Use photo
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <form id="profileDetailsForm" class="app-form-loading" data-rf-no-reset="true" data-loader-manual="true">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="profileUsername">Username</label>
+                <input type="text" class="form-control rounded-3" id="profileUsername" name="username" maxlength="150" autocomplete="username" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="profileEmail">Email</label>
+                <input type="email" class="form-control rounded-3" id="profileEmail" name="email" autocomplete="email">
+              </div>
+              <div class="row g-2 mb-0">
+                <div class="col-sm-6">
+                  <label class="form-label small fw-semibold" for="profileFirstName">First name</label>
+                  <input type="text" class="form-control rounded-3" id="profileFirstName" name="first_name">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label small fw-semibold" for="profileLastName">Last name</label>
+                  <input type="text" class="form-control rounded-3" id="profileLastName" name="last_name">
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-app-primary btn-primary rounded-3" id="profileSaveBtn">
+                  <i class="bi bi-check-lg me-1"></i>Save profile
+                </button>
+              </div>
+            </form>
+            <hr class="my-4">
+            <form id="profilePasswordForm" class="app-form-loading" data-rf-no-reset="true" data-loader-manual="true">
+              <h6 class="fw-semibold mb-3">Change password</h6>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="profileOldPassword">Current password</label>
+                <input type="password" class="form-control rounded-3" id="profileOldPassword" name="old_password" autocomplete="current-password" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="profileNewPassword">New password</label>
+                <input type="password" class="form-control rounded-3" id="profileNewPassword" name="new_password" autocomplete="new-password" minlength="7" required>
+              </div>
+              <div class="mb-0">
+                <label class="form-label small fw-semibold" for="profileConfirmPassword">Confirm new password</label>
+                <input type="password" class="form-control rounded-3" id="profileConfirmPassword" autocomplete="new-password" minlength="7" required>
+              </div>
+              <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-outline-primary rounded-3" id="profilePasswordBtn">
+                  <i class="bi bi-shield-lock me-1"></i>Update password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}

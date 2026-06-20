@@ -1,0 +1,10 @@
+{% extends 'app_base.html' %}
+{% load static %}
+{% block title %}{{ student.get_full_name|default:student.username }}{% endblock %}
+{% block page_title %}Student profile{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student_profile.css' %}">
+{% endblock %}
+{% block content %}
+{% include 'reports/partials/student_profile_body.html' %}
+{% endblock %}

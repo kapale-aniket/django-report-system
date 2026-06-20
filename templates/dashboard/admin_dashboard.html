@@ -1,0 +1,289 @@
+{% extends 'app_base.html' %}
+{% block title %}Admin dashboard{% endblock %}
+{% block page_title %}Admin dashboard{% endblock %}
+{% block content %}
+{% if announcements %}
+<div class="app-card mb-4" id="dashAnnouncements">
+  <div class="app-card-header d-flex justify-content-between align-items-center">
+    <span>Announcements</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-collapse-section="dashAnnounceBox" aria-expanded="true">Collapse</button>
+  </div>
+  <div class="app-card-body" id="dashAnnounceBox">
+    {% for a in announcements %}
+    <div class="terra-announcement mb-3 mb-md-0 border-0"><strong>{{ a.title }}</strong><p class="small text-muted mb-0 mt-1">{{ a.message|linebreaksbr }}</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 g-xl-4 mb-4">
+  <div class="col-6 col-lg-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=awaiting_admin" title="Reports awaiting your approval">
+      <div class="app-stat-icon app-stat-icon--warning"><i class="bi bi-shield-check"></i></div>
+      <div class="app-stat-label">Awaiting approval</div>
+      <div class="app-stat-value">{{ awaiting_admin }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-3">
+    <a class="app-stat-card" href="{% url 'accounts:user_management' %}?status=pending" title="Users pending activation">
+      <div class="app-stat-icon app-stat-icon--warning"><i class="bi bi-hourglass-split"></i></div>
+      <div class="app-stat-label">Pending users</div>
+      <div class="app-stat-value">{{ pending_users }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-3">
+    <a class="app-stat-card" href="{% url 'accounts:user_management' %}?role=student" title="View all students">
+      <div class="app-stat-icon app-stat-icon--info"><i class="bi bi-people"></i></div>
+      <div class="app-stat-label">Students</div>
+      <div class="app-stat-value">{{ total_students }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-3">
+    <a class="app-stat-card" href="{% url 'accounts:user_management' %}?role=teacher" title="View all teachers">
+      <div class="app-stat-icon app-stat-icon--primary"><i class="bi bi-person-badge"></i></div>
+      <div class="app-stat-label">Teachers</div>
+      <div class="app-stat-value">{{ total_teachers }}</div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="app-card h-100">
+      <div class="app-card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <span>System settings</span>
+        <button type="button" class="btn btn-sm btn-app-primary btn-primary rounded-3" data-bs-toggle="modal" data-bs-target="#systemSettingsModal">
+          <i class="bi bi-gear me-1"></i>Edit settings
+        </button>
+      </div>
+      <div class="app-card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-sm-5 text-muted">Individual deadline</dt>
+          <dd class="col-sm-7 fw-semibold">{{ deadline|date:"M d, Y H:i" }}</dd>
+          <dt class="col-sm-5 text-muted">Individual max attempts</dt>
+          <dd class="col-sm-7 fw-semibold">{{ max_attempts }}</dd>
+          <dt class="col-sm-5 text-muted">Group deadline</dt>
+          <dd class="col-sm-7 fw-semibold">{{ group_deadline|date:"M d, Y H:i" }}</dd>
+          <dt class="col-sm-5 text-muted">Group max attempts</dt>
+          <dd class="col-sm-7 fw-semibold">{{ group_max_attempts }}</dd>
+          <dt class="col-sm-5 text-muted">Group member size</dt>
+          <dd class="col-sm-7 fw-semibold">{{ group_min_members }}–{{ group_max_members }}</dd>
+          <dt class="col-sm-5 text-muted">Max report file size</dt>
+          <dd class="col-sm-7 fw-semibold">{{ max_file_size_mb }} MB</dd>
+        </dl>
+        <p class="small text-muted mt-3 mb-0">Individual and group projects can have separate deadlines, attempt limits, and group size rules.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="app-card h-100">
+      <div class="app-card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <span>Report approvals</span>
+        <a class="btn btn-sm btn-app-primary btn-primary rounded-3" href="{% url 'reports:list' %}?status=awaiting_admin">
+          <i class="bi bi-shield-check me-1"></i>Review queue
+        </a>
+      </div>
+      <div class="app-card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-sm-5 text-muted">Awaiting admin</dt>
+          <dd class="col-sm-7 fw-semibold">{% if awaiting_admin %}<span class="text-warning">{{ awaiting_admin }}</span>{% else %}0{% endif %}</dd>
+          <dt class="col-sm-5 text-muted">Total reports</dt>
+          <dd class="col-sm-7 fw-semibold">{{ total_reports }}</dd>
+          <dt class="col-sm-5 text-muted">Approved</dt>
+          <dd class="col-sm-7 fw-semibold">{{ approved_reports }}</dd>
+        </dl>
+        <p class="small text-muted mt-3 mb-0">Teacher-approved reports waiting for your final sign-off and certificates.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12">
+    <div class="app-card">
+      <div class="app-card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <span>Certificate template</span>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-sm btn-outline-secondary rounded-3" href="{% url 'reports:certificate_template_preview' %}" target="_blank" rel="noopener">
+            <i class="bi bi-eye me-1"></i>Preview active
+          </a>
+          <a class="btn btn-sm btn-outline-secondary rounded-3" href="{% url 'dashboard:admin_dashboard' %}?new_template=1">
+            <i class="bi bi-plus-lg me-1"></i>New template
+          </a>
+          <button type="button" class="btn btn-sm btn-app-primary btn-primary rounded-3" data-bs-toggle="modal" data-bs-target="#certificateTemplateModal">
+            <i class="bi bi-palette me-1"></i>Customize template
+          </button>
+        </div>
+      </div>
+      <div class="app-card-body">
+        <div class="row g-3 align-items-start">
+          <div class="col-md-4 col-lg-3">
+            {% if cert_template.reference_image %}
+            <div class="cert-template-preview">
+              <img src="{{ cert_template.reference_image.url }}" alt="Certificate reference design" class="cert-template-preview__img">
+            </div>
+            {% else %}
+            <div class="cert-template-preview cert-template-preview--empty">
+              <i class="bi bi-image fs-2 text-muted"></i>
+              <p class="small text-muted mb-0 mt-2">No reference image yet</p>
+            </div>
+            {% endif %}
+          </div>
+          <div class="col-md-8 col-lg-9">
+            <dl class="row mb-0 small">
+              <dt class="col-sm-4 text-muted">Template name</dt>
+              <dd class="col-sm-8 fw-semibold">{{ cert_template.name }}</dd>
+              <dt class="col-sm-4 text-muted">Certificate title</dt>
+              <dd class="col-sm-8">{{ cert_template.title_text }}</dd>
+              <dt class="col-sm-4 text-muted">Subtitle</dt>
+              <dd class="col-sm-8">{{ cert_template.subtitle_text }}</dd>
+              <dt class="col-sm-4 text-muted">Background</dt>
+              <dd class="col-sm-8">{% if cert_template.reference_image and cert_template.use_reference_background %}Reference image{% else %}Styled panel{% endif %}</dd>
+              <dt class="col-sm-4 text-muted">Colors</dt>
+              <dd class="col-sm-8">
+                <span class="cert-color-swatch" style="background: {{ cert_template.accent_color }};" title="Accent"></span>
+                <span class="cert-color-swatch" style="background: {{ cert_template.secondary_color }};" title="Secondary"></span>
+                <span class="cert-color-swatch" style="background: {{ cert_template.background_color }};" title="Background"></span>
+              </dd>
+            </dl>
+            <p class="small text-muted mt-3 mb-0">Start with a <strong>reference image</strong> to auto-detect colors, borders, signatures, and layout — then edit or save. Or build <strong>from scratch</strong>. Preview before saving.</p>
+          </div>
+        </div>
+        {% if cert_templates|length > 1 or cert_templates and not cert_template.is_active %}
+        <hr class="my-3">
+        <p class="small fw-semibold mb-2">Saved templates</p>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr class="small text-muted">
+                <th>Name</th>
+                <th>Updated</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in cert_templates %}
+              <tr>
+                <td class="fw-semibold">{{ item.name }}</td>
+                <td class="small text-muted">{{ item.updated_at|date:"M j, Y" }}</td>
+                <td>{% if item.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Saved</span>{% endif %}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-secondary rounded-3" href="{% url 'dashboard:admin_dashboard' %}?cert_template={{ item.pk }}">Edit</a>
+                  {% if not item.is_active %}
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="activate_certificate_template" value="1">
+                    <input type="hidden" name="template_id" value="{{ item.pk }}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-3">Set active</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2">
+  <a class="btn btn-outline-secondary rounded-3" href="{% url 'accounts:user_management' %}">
+    <i class="bi bi-people me-1"></i>Manage users
+    {% if pending_users %}<span class="badge rounded-pill text-bg-warning ms-1">{{ pending_users }}</span>{% endif %}
+  </a>
+  <a class="btn btn-outline-secondary rounded-3" href="{% url 'accounts:user_management' %}?add_user=1">
+    <i class="bi bi-person-plus me-1"></i>Add user
+  </a>
+  <a class="btn btn-outline-secondary rounded-3" href="{% url 'reports:list' %}">
+    <i class="bi bi-file-earmark-text me-1"></i>All reports
+  </a>
+  <a class="btn btn-outline-secondary rounded-3" href="{% url 'qa:home' %}">
+    <i class="bi bi-chat-dots me-1"></i>Q&amp;A
+    {% if open_qa_count %}<span class="badge rounded-pill text-bg-warning ms-1">{{ open_qa_count }}</span>{% endif %}
+  </a>
+  <a class="btn btn-outline-secondary rounded-3" href="{% url 'reports:extension_queue' %}">
+    <i class="bi bi-calendar-plus me-1"></i>Extensions
+    {% if pending_extensions %}<span class="badge rounded-pill text-bg-warning ms-1">{{ pending_extensions }}</span>{% endif %}
+  </a>
+  <a class="btn btn-outline-secondary rounded-3" href="{% url 'reports:activity_log' %}">
+    <i class="bi bi-clock-history me-1"></i>Activity log
+  </a>
+  <a class="btn btn-outline-secondary rounded-3" href="{% url 'reports:leaderboard' %}">
+    <i class="bi bi-trophy me-1"></i>Leaderboard
+  </a>
+</div>
+{% endblock %}
+{% block modals %}
+<div class="modal fade" id="systemSettingsModal" tabindex="-1" aria-labelledby="systemSettingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" class="app-form-loading" id="systemSettingsForm" data-ajax="true" data-api-url="/api/v1/reports/settings/" data-api-method="PUT" data-api-reload="true">
+        {% csrf_token %}
+        <input type="hidden" name="save_deadline" value="1">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold" id="systemSettingsModalLabel">System settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <p class="small fw-semibold text-muted mb-2">Individual projects</p>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">Submission deadline</label>
+            {{ deadline_form.submission_deadline }}
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">Max resubmission attempts</label>
+            {{ deadline_form.max_attempts }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Max report file size (MB)</label>
+            {{ deadline_form.max_file_size_mb }}
+          </div>
+          <hr class="my-3">
+          <p class="small fw-semibold text-muted mb-2">Group projects</p>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">Group submission deadline</label>
+            {{ deadline_form.group_submission_deadline }}
+            <div class="form-text">Leave blank to use the individual deadline.</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">Group max resubmission attempts</label>
+            {{ deadline_form.group_max_attempts }}
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Min group members</label>
+              {{ deadline_form.group_min_members }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Max group members</label>
+              {{ deadline_form.group_max_members }}
+            </div>
+          </div>
+          <p class="small text-muted mb-0">Member count includes the student who creates the group.</p>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-app-primary btn-primary rounded-3">Save settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="certificateTemplateModal" tabindex="-1" aria-labelledby="certificateTemplateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      {% include 'dashboard/partials/certificate_template_form.html' %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/report_ux.js' %}"></script>
+<script src="{% static 'js/certificate_designer.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% if items %}
+<script type="application/json" class="rf-flash-messages">[
+{% for item in items %}
+  {"text": "{{ item.text|escapejs }}", "type": "{{ item.type }}"}{% if not forloop.last %},{% endif %}
+{% endfor %}
+]</script>
+{% endif %}

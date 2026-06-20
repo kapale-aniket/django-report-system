@@ -1,0 +1,29 @@
+{% extends 'app_base.html' %}
+{% block title %}Extension requests{% endblock %}
+{% block page_title %}Deadline extensions{% endblock %}
+{% block content %}
+<div class="app-card">
+  {% for ext in requests %}
+  <div class="border-bottom p-3">
+    <p class="mb-1 fw-semibold">Report #{{ ext.report_id }} — {{ ext.student.username }}</p>
+    <p class="small text-muted mb-2">{{ ext.reason|linebreaksbr }}</p>
+    <form method="post" action="{% url 'reports:extension_resolve' ext.pk %}" class="d-flex flex-wrap gap-2 align-items-center"
+          data-ajax="true" data-api-url="/api/v1/reports/extensions/{{ ext.pk }}/resolve/" data-api-reload="true">
+      {% csrf_token %}
+      <input type="hidden" name="decision" value="approve">
+      <input type="text" name="note" class="form-control form-control-sm rounded-3" style="max-width:320px" placeholder="Note (optional)">
+      <button type="submit" class="btn btn-sm btn-success rounded-3">Approve (+7 days global)</button>
+    </form>
+    <form method="post" action="{% url 'reports:extension_resolve' ext.pk %}" class="mt-2"
+          data-ajax="true" data-api-url="/api/v1/reports/extensions/{{ ext.pk }}/resolve/" data-api-reload="true">
+      {% csrf_token %}
+      <input type="hidden" name="decision" value="reject">
+      <input type="text" name="note" class="form-control form-control-sm rounded-3 d-inline-block" style="max-width:320px" placeholder="Note (optional)">
+      <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">Reject</button>
+    </form>
+  </div>
+  {% empty %}
+  <p class="text-muted p-4 mb-0">No pending extension requests.</p>
+  {% endfor %}
+</div>
+{% endblock %}

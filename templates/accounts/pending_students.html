@@ -1,0 +1,194 @@
+{% extends 'app_base.html' %}
+
+{% block title %}Pending students{% endblock %}
+
+{% block page_title %}Approve students{% endblock %}
+
+{% block content %}
+
+<div class="app-card">
+
+  <div class="app-card-header">Students awaiting activation</div>
+
+  <div class="app-card-body">
+
+    <p class="text-muted small mb-3">Only students assigned to you appear here. After approval they can sign in.</p>
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+
+      <div class="col-md-5">
+
+        <label class="form-label small fw-semibold text-muted mb-1">Search</label>
+
+        <input type="search" name="search" value="{{ request.GET.search }}" class="form-control rounded-3" placeholder="Username, name, email…">
+
+      </div>
+
+      {% include 'partials/rf_table_sort_fields.html' %}
+
+      {% url 'accounts:pending_students' as pending_students_clear_url %}
+      {% include 'partials/rf_filter_actions.html' with clear_url=pending_students_clear_url show_filter_icon=False actions_full_width=True show_filter_label=True %}
+
+    </form>
+
+    {% if page_obj.object_list %}
+
+    <div class="rf-table-panel" data-rf-table="server">
+
+    <div class="app-table-wrap table-responsive">
+
+      <table class="table table-hover align-middle mb-0">
+
+        <thead>
+
+          <tr>
+
+            <th>Username</th>
+
+            <th>Name</th>
+
+            <th>Email</th>
+
+            <th>Department</th>
+
+            <th class="text-end">Actions</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {% for s in page_obj %}
+
+          <tr>
+
+            <td class="fw-medium">{{ s.username }}</td>
+
+            <td>{{ s.get_full_name }}</td>
+
+            <td class="small text-muted">{{ s.email }}</td>
+
+            <td class="small">{{ s.department|default:"—" }}</td>
+
+            <td class="text-end">
+
+              <div class="app-action-group">
+
+                <button type="button" class="app-action-btn app-action-btn--view" title="View"
+
+                  data-bs-toggle="modal" data-bs-target="#studentViewModal"
+
+                  data-username="{{ s.username }}"
+
+                  data-name="{{ s.get_full_name }}"
+
+                  data-email="{{ s.email }}"
+
+                  data-dept="{{ s.department|default:'—' }}">
+
+                  <i class="bi bi-eye"></i>
+
+                </button>
+
+                <form method="post" action="{% url 'accounts:approve_student' s.pk %}" class="d-inline" data-ajax="true" data-api-url="/api/v1/users/{{ s.pk }}/approve/" data-api-reload="true">
+
+                  {% csrf_token %}
+
+                  <button type="submit" class="app-action-btn app-action-btn--success" title="Approve student"><i class="bi bi-check-lg"></i></button>
+
+                </form>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    {% include 'partials/pagination.html' with page_obj=page_obj filter_querystring=filter_querystring %}
+
+    </div>
+
+    {% else %}
+
+    <p class="text-muted mb-0">No pending students assigned to you.</p>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+{% endblock %}
+
+
+
+{% block modals %}
+
+<div class="modal fade" id="studentViewModal" tabindex="-1">
+
+  <div class="modal-dialog modal-dialog-centered">
+
+    <div class="modal-content">
+
+      <div class="modal-header border-0">
+
+        <h5 class="modal-title fw-bold">Student</h5>
+
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+      </div>
+
+      <div class="modal-body pt-0 small">
+
+        <p class="mb-1"><span class="text-muted">Username:</span> <span id="studentViewUsername"></span></p>
+
+        <p class="mb-1"><span class="text-muted">Name:</span> <span id="studentViewName"></span></p>
+
+        <p class="mb-1"><span class="text-muted">Email:</span> <span id="studentViewEmail"></span></p>
+
+        <p class="mb-0"><span class="text-muted">Department:</span> <span id="studentViewDept"></span></p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+<script>
+
+document.getElementById('studentViewModal').addEventListener('show.bs.modal', function (e) {
+
+  var btn = e.relatedTarget;
+
+  document.getElementById('studentViewUsername').textContent = btn.getAttribute('data-username') || '—';
+
+  document.getElementById('studentViewName').textContent = btn.getAttribute('data-name') || '—';
+
+  document.getElementById('studentViewEmail').textContent = btn.getAttribute('data-email') || '—';
+
+  document.getElementById('studentViewDept').textContent = btn.getAttribute('data-dept') || '—';
+
+});
+
+</script>
+
+{% endblock %}
+
+

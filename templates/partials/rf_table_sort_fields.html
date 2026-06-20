@@ -1,0 +1,16 @@
+{# Server-side sort controls — include inside GET filter forms. Pass sort_by, sort_dir, sort_options #}
+<div class="{% if sort_by_col_class %}{{ sort_by_col_class }}{% else %}col-md-4 col-lg-3{% endif %}">
+  <label class="form-label small fw-semibold text-muted mb-1">Sort by</label>
+  <select name="sort_by" class="form-select rounded-3 rf-select2" data-rf-select2-search="false">
+    {% for value, label in sort_options %}
+    <option value="{{ value }}" {% if sort_by == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="{% if sort_dir_col_class %}{{ sort_dir_col_class }}{% else %}col-md-3 col-lg-2{% endif %}">
+  <label class="form-label small fw-semibold text-muted mb-1">Order</label>
+  <select name="sort_dir" class="form-select rounded-3 rf-select2" data-rf-select2-search="false">
+    <option value="asc" {% if sort_dir == 'asc' %}selected{% endif %}>Ascending</option>
+    <option value="desc" {% if sort_dir == 'desc' %}selected{% endif %}>Descending</option>
+  </select>
+</div>

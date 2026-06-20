@@ -1,0 +1,92 @@
+{% load static %}
+<aside class="app-sidebar" id="appSidebar" aria-label="Sidebar navigation">
+  <div class="app-sidebar-mobile-header d-lg-none">
+    <span class="app-sidebar-label fw-semibold">Menu</span>
+    <button type="button" class="app-sidebar-close" id="appSidebarClose" aria-label="Close menu">
+      <i class="bi bi-x-lg" aria-hidden="true"></i>
+    </button>
+  </div>
+  <a class="app-sidebar-brand" href="{% url app_dashboard_url %}">
+    <span class="app-sidebar-brand-mark">RF</span>
+    <span class="app-sidebar-label">ReportFlow</span>
+  </a>
+  <nav class="app-sidebar-nav">
+    {% if user.role == 'admin' %}
+    <a class="app-sidebar-link {% if app_nav_section == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:admin_dashboard' %}">
+      <i class="bi bi-speedometer2"></i><span class="app-sidebar-label">Dashboard</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'reports' %}active{% endif %}" href="{% url 'reports:list' %}">
+      <i class="bi bi-file-earmark-text"></i><span class="app-sidebar-label">Reports</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'project_groups' %}active{% endif %}" href="{% url 'reports:project_groups_admin' %}">
+      <i class="bi bi-people"></i><span class="app-sidebar-label">Group teachers</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'users' %}active{% endif %}" href="{% url 'accounts:user_management' %}">
+      <i class="bi bi-people"></i><span class="app-sidebar-label">Users</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'messages' %}active{% endif %}" href="{% url 'messaging:inbox' %}">
+      <i class="bi bi-envelope"></i><span class="app-sidebar-label">Messages</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'notifications' %}active{% endif %}" href="{% url 'reports:notifications' %}">
+      <i class="bi bi-bell"></i><span class="app-sidebar-label">Notifications</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'qa' %}active{% endif %}" href="{% url 'qa:home' %}">
+      <i class="bi bi-chat-dots"></i><span class="app-sidebar-label">Q&amp;A</span>
+    </a>
+    {% elif user.role == 'teacher' %}
+    <a class="app-sidebar-link {% if app_nav_section == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:teacher_dashboard' %}">
+      <i class="bi bi-speedometer2"></i><span class="app-sidebar-label">Dashboard</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'reports' %}active{% endif %}" href="{% url 'reports:list' %}">
+      <i class="bi bi-file-earmark-text"></i><span class="app-sidebar-label">Reports</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'pending' %}active{% endif %}" href="{% url 'accounts:pending_students' %}">
+      <i class="bi bi-person-plus"></i><span class="app-sidebar-label">Approve students</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'messages' %}active{% endif %}" href="{% url 'messaging:inbox' %}">
+      <i class="bi bi-envelope"></i><span class="app-sidebar-label">Messages</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'notifications' %}active{% endif %}" href="{% url 'reports:notifications' %}">
+      <i class="bi bi-bell"></i><span class="app-sidebar-label">Notifications</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'qa' %}active{% endif %}" href="{% url 'qa:home' %}">
+      <i class="bi bi-chat-dots"></i><span class="app-sidebar-label">Q&amp;A</span>
+    </a>
+    {% else %}
+    <a class="app-sidebar-link {% if app_nav_section == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:student_dashboard' %}">
+      <i class="bi bi-speedometer2"></i><span class="app-sidebar-label">Dashboard</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'project_groups' %}active{% endif %}" href="{% url 'reports:project_groups' %}">
+      <i class="bi bi-people"></i><span class="app-sidebar-label">Project groups</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'submit' %}active{% endif %}" href="{% url 'reports:submit' %}">
+      <i class="bi bi-cloud-arrow-up"></i><span class="app-sidebar-label">Submit Report</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'my_reports' %}active{% endif %}" href="{% url 'reports:my_reports' %}">
+      <i class="bi bi-folder2-open"></i><span class="app-sidebar-label">My Reports</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'messages' %}active{% endif %}" href="{% url 'messaging:inbox' %}">
+      <i class="bi bi-envelope"></i><span class="app-sidebar-label">Messages</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'notifications' %}active{% endif %}" href="{% url 'reports:notifications' %}">
+      <i class="bi bi-bell"></i><span class="app-sidebar-label">Notifications</span>
+    </a>
+    <a class="app-sidebar-link {% if app_nav_section == 'qa' %}active{% endif %}" href="{% url 'qa:home' %}">
+      <i class="bi bi-chat-dots"></i><span class="app-sidebar-label">Q&amp;A</span>
+    </a>
+    {% endif %}
+  </nav>
+  <div class="app-sidebar-footer">
+    <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="app-sidebar-link w-100 border-0 bg-transparent text-start">
+        <i class="bi bi-box-arrow-right"></i><span class="app-sidebar-label">Logout</span>
+      </button>
+    </form>
+    <button type="button" class="app-sidebar-toggle mt-2 d-none d-lg-flex" id="appSidebarCollapse" title="Collapse sidebar">
+      <i class="bi bi-layout-sidebar-inset-reverse"></i>
+      <span class="app-sidebar-label">Collapse</span>
+    </button>
+  </div>
+</aside>
+<div class="app-sidebar-overlay" id="appSidebarOverlay" aria-hidden="true"></div>

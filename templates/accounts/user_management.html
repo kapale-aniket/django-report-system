@@ -1,0 +1,555 @@
+{% extends 'app_base.html' %}
+{% load static %}
+{% block title %}User management{% endblock %}
+{% block page_title %}Users{% endblock %}
+{% block content %}
+{% if pending_count and request.GET.status == 'pending' %}
+<div class="alert alert-warning border-0 rounded-3 mb-4 py-2 px-3">
+  <i class="bi bi-hourglass-split me-1"></i>Showing <strong>{{ pending_count }}</strong> account(s) awaiting approval — use the <i class="bi bi-check-lg"></i> action to activate.
+</div>
+{% elif pending_count %}
+<div class="alert alert-warning border-0 rounded-3 mb-4 py-2 px-3">
+  <i class="bi bi-hourglass-split me-1"></i><strong>{{ pending_count }}</strong> account(s) awaiting approval — filter by <strong>Pending approval</strong> or use the <i class="bi bi-check-lg"></i> action in the table.
+</div>
+{% endif %}
+
+<form method="get" class="app-card mb-3">
+  <div class="app-card-body py-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+        {{ filter_form.status }}
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small fw-semibold text-muted mb-1">Role</label>
+        {{ filter_form.role }}
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label small fw-semibold text-muted mb-1">Search</label>
+        {{ filter_form.search }}
+      </div>
+      {% include 'partials/rf_table_sort_fields.html' with sort_by_col_class='col-6 col-md-3' sort_dir_col_class='col-6 col-md-2' %}
+      {% url 'accounts:user_management' as users_clear_url %}
+      {% include 'partials/rf_filter_actions.html' with clear_url=users_clear_url btn_sm=True actions_col_class='col-12 col-md-2' show_filter_label=True %}
+    </div>
+  </div>
+</form>
+
+<div class="app-card">
+  <div class="app-card-header d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    <span>User directory</span>
+    <button type="button" class="btn btn-sm btn-app-primary btn-primary rounded-3" data-bs-toggle="modal" data-bs-target="#userCreateModal">
+      <i class="bi bi-person-plus me-1"></i>Add user
+    </button>
+  </div>
+  <div class="rf-table-panel" data-rf-table="server">
+  <div class="app-table-wrap app-table-wrap--wide table-responsive">
+    <table class="table table-striped table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Dept</th>
+          <th>Teacher</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in page_obj %}
+        <tr>
+          <td>
+            <div class="fw-medium">{{ u.username }}</div>
+            <div class="small text-muted">{{ u.get_full_name|default:"—" }} · {{ u.email }}</div>
+          </td>
+          <td><span class="badge rounded-pill bg-secondary">{{ u.get_role_display }}</span></td>
+          <td>
+            {% if u.is_active %}
+            <span class="badge rounded-pill badge-status-approved">Active</span>
+            {% else %}
+            <span class="badge rounded-pill badge-status-pending">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="small text-muted">{{ u.department|default:"—" }}</td>
+          <td class="small">
+            {% if u.role == 'student' %}
+            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none"
+              data-bs-toggle="modal" data-bs-target="#assignTeacherModal"
+              data-api-url="/api/v1/users/{{ u.pk }}/assign-teacher/"
+              data-username="{{ u.username }}"
+              data-teacher-id="{{ u.assigned_teacher_id|default:'' }}">
+              {% if u.assigned_teacher %}{{ u.assigned_teacher.username }}{% else %}<span class="text-muted">Assign…</span>{% endif %}
+              <i class="bi bi-pencil-square ms-1 small"></i>
+            </button>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">
+            <div class="app-action-group">
+              <button type="button" class="app-action-btn app-action-btn--view" title="View user"
+                data-bs-toggle="modal" data-bs-target="#userViewModal"
+                data-user-id="{{ u.pk }}"
+                data-role-value="{{ u.role }}"
+                data-username="{{ u.username }}"
+                data-name="{{ u.get_full_name }}"
+                data-email="{{ u.email }}"
+                data-role="{{ u.get_role_display }}"
+                data-dept="{{ u.department|default:'—' }}"
+                data-roll="{{ u.roll_number|default:'—' }}"
+                data-status="{% if u.is_active %}Active{% else %}Inactive{% endif %}"
+                data-teacher-name="{% if u.assigned_teacher %}{{ u.assigned_teacher.username }}{% endif %}"
+                data-teacher-full-name="{% if u.assigned_teacher %}{{ u.assigned_teacher.get_full_name|default:u.assigned_teacher.username }}{% endif %}"
+                data-student-count="{{ u.assigned_student_count|default:0 }}">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button type="button" class="app-action-btn app-action-btn--edit" title="Edit user"
+                data-bs-toggle="modal" data-bs-target="#userEditModal"
+                data-update-url="{% url 'accounts:user_update' u.pk %}"
+                data-api-url="/api/v1/users/{{ u.pk }}/update/"
+                data-username="{{ u.username }}"
+                data-first-name="{{ u.first_name }}"
+                data-last-name="{{ u.last_name }}"
+                data-email="{{ u.email }}"
+                data-department="{{ u.department }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              {% if not u.is_active %}
+              <form method="post" action="{% url 'accounts:approve_user' u.pk %}" class="d-inline" data-ajax="true" data-api-url="/api/v1/users/{{ u.pk }}/approve/" data-api-reload="true">
+                {% csrf_token %}
+                <button type="submit" class="app-action-btn app-action-btn--success" title="Approve / activate"><i class="bi bi-check-lg"></i></button>
+              </form>
+              {% else %}
+              <form method="post" action="{% url 'accounts:user_set_active' u.pk %}" class="d-inline" data-ajax="true" data-api-url="/api/v1/users/{{ u.pk }}/set-active/" data-api-body='{"is_active":false}' data-api-reload="true">
+                {% csrf_token %}
+                <button type="submit" class="app-action-btn app-action-btn--warn" title="Deactivate user"><i class="bi bi-person-dash"></i></button>
+              </form>
+              {% endif %}
+              <button type="button" class="app-action-btn app-action-btn--delete" title="Delete user"
+                data-bs-toggle="modal" data-bs-target="#userDeleteModal"
+                data-delete-url="{% url 'accounts:user_delete' u.pk %}"
+                data-api-url="/api/v1/users/{{ u.pk }}/delete/"
+                data-user-name="{{ u.username }}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No users match filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'partials/pagination.html' with page_obj=page_obj filter_querystring=filter_querystring %}
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="userCreateModal" tabindex="-1" aria-labelledby="userCreateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <form method="post" class="app-form-loading" id="userCreateForm" data-ajax="true" data-api-url="/api/v1/users/create/" data-api-remap="assigned_teacher:assigned_teacher_id" data-api-reload="true">
+        {% csrf_token %}
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold" id="userCreateModalLabel">Add student / teacher</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <p class="small text-muted mb-3">Username and password (max 7 characters each) are generated automatically and emailed to the address below.</p>
+          <div class="row g-3">
+            {% for field in form %}
+            <div class="col-md-6{% if field.name == 'assigned_teacher' %} user-create-teacher-field d-none{% endif %}">
+              <label class="form-label fw-semibold small" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {{ field.errors }}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-app-primary btn-primary rounded-3"><i class="bi bi-person-plus me-1"></i>Create user</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="assignTeacherModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="" class="app-form-loading" id="assignTeacherForm" data-ajax="true" data-api-url="" data-api-reload="true">
+        {% csrf_token %}
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Assign teacher</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <p class="small text-muted mb-3">Student: <strong id="assignTeacherStudent"></strong></p>
+          <label class="form-label small fw-semibold" for="assignTeacherSelect">Teacher</label>
+          <select name="teacher_id" id="assignTeacherSelect" class="form-select rounded-3 rf-select2" data-placeholder="Search teachers…" data-rf-select2-clear="true">
+            <option value="">— None —</option>
+            {% for t in teachers %}
+            <option value="{{ t.pk }}">{{ t.username }}{% if t.get_full_name %} · {{ t.get_full_name }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-app-primary btn-primary rounded-3">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="userViewModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">User details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-0">
+        <dl class="row mb-0 small">
+          <dt class="col-4 text-muted">Username</dt><dd class="col-8" id="userViewUsername"></dd>
+          <dt class="col-4 text-muted">Name</dt><dd class="col-8" id="userViewName"></dd>
+          <dt class="col-4 text-muted">Email</dt><dd class="col-8" id="userViewEmail"></dd>
+          <dt class="col-4 text-muted">Role</dt><dd class="col-8" id="userViewRole"></dd>
+          <dt class="col-4 text-muted">Department</dt><dd class="col-8" id="userViewDept"></dd>
+          <dt class="col-4 text-muted user-view-student-only">Roll number</dt><dd class="col-8 user-view-student-only" id="userViewRoll"></dd>
+          <dt class="col-4 text-muted user-view-student-only">Assigned teacher</dt><dd class="col-8 user-view-student-only" id="userViewTeacher"></dd>
+          <dt class="col-4 text-muted">Status</dt><dd class="col-8" id="userViewStatus"></dd>
+        </dl>
+
+        <div id="userViewTeacherSection" class="d-none border-top pt-3 mt-3">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <div>
+              <div class="small fw-semibold">Assigned students</div>
+              <p class="small text-muted mb-0" id="userViewStudentCount"></p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3" id="userViewStudentsToggle">
+              <i class="bi bi-people me-1"></i>Show students
+            </button>
+          </div>
+          <div id="userViewStudentsPanel" class="d-none mt-3">
+            <div class="app-table-wrap table-responsive">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="userViewStudentsBody"></tbody>
+              </table>
+            </div>
+            <p class="small text-muted mb-0 mt-2 d-none" id="userViewStudentsEmpty">No students assigned to this teacher yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="userEditModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="" class="app-form-loading" id="userEditForm" data-ajax="true" data-api-url="" data-api-method="PATCH" data-api-reload="true">
+        {% csrf_token %}
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Edit <span id="userEditUsername"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">First name</label>
+            <input type="text" name="first_name" id="userEditFirstName" class="form-control rounded-3">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Last name</label>
+            <input type="text" name="last_name" id="userEditLastName" class="form-control rounded-3">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Email</label>
+            <input type="email" name="email" id="userEditEmail" class="form-control rounded-3">
+          </div>
+          <div class="mb-0">
+            <label class="form-label small fw-semibold" for="userEditDepartment">Department</label>
+            <select name="department" id="userEditDepartment" class="form-select rounded-3 rf-select2" data-placeholder="Search departments…" data-rf-select2-clear="true" data-rf-department-select="true">
+              {% for value, label in department_choices %}
+              <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-app-primary btn-primary rounded-3">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="addTeacherModal" tabindex="-1" aria-labelledby="addTeacherModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="addTeacherForm" class="app-form-loading" data-rf-no-reset="true">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold" id="addTeacherModalLabel">Add teacher</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold" for="addTeacherFirstName">First name</label>
+            <input type="text" class="form-control rounded-3" id="addTeacherFirstName" name="first_name" maxlength="150" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold" for="addTeacherLastName">Last name</label>
+            <input type="text" class="form-control rounded-3" id="addTeacherLastName" name="last_name" maxlength="150" required>
+          </div>
+          <div class="mb-0">
+            <label class="form-label small fw-semibold" for="addTeacherEmail">Email</label>
+            <input type="email" class="form-control rounded-3" id="addTeacherEmail" name="email" required>
+            <p class="small text-muted mb-0 mt-2">Username and password (max 7 characters each) are generated automatically and emailed to this address.</p>
+          </div>
+          <div class="mb-0 mt-2">
+            <label class="form-label small fw-semibold" for="addTeacherDepartment">Department</label>
+            <input type="text" class="form-control rounded-3" id="addTeacherDepartment" name="department" readonly>
+            <p class="small text-muted mb-0 mt-2">The teacher will be created for the student’s selected department and appear in the assign-teacher list.</p>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-app-primary btn-primary rounded-3" id="addTeacherSaveBtn">
+            <i class="bi bi-person-plus me-1"></i>Save teacher
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="addDepartmentForm" class="app-form-loading" data-rf-no-reset="true">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold" id="addDepartmentModalLabel">Add department</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <label class="form-label small fw-semibold" for="addDepartmentName">Department name</label>
+          <input type="text" class="form-control rounded-3" id="addDepartmentName" name="name" maxlength="120" placeholder="e.g. Computer Science" required>
+          <p class="small text-muted mb-0 mt-2">The new department will appear in the dropdown and can be selected for this user.</p>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-app-primary btn-primary rounded-3" id="addDepartmentSaveBtn">
+            <i class="bi bi-plus-lg me-1"></i>Save department
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="userDeleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="" class="app-form-loading" id="userDeleteForm" data-ajax="true" data-api-url="" data-api-method="DELETE" data-api-reload="true">
+        {% csrf_token %}
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Delete user?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body pt-0 text-muted"><span id="userDeleteName"></span> will lose access immediately.</div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger rounded-3"><i class="bi bi-trash me-1"></i>Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/department_select.js' %}"></script>
+<script src="{% static 'js/user_create_teachers.js' %}"></script>
+<script>
+(function () {
+  var userViewModal = document.getElementById('userViewModal');
+  var studentsPanel = document.getElementById('userViewStudentsPanel');
+  var studentsBody = document.getElementById('userViewStudentsBody');
+  var studentsEmpty = document.getElementById('userViewStudentsEmpty');
+  var studentsToggle = document.getElementById('userViewStudentsToggle');
+  var teacherSection = document.getElementById('userViewTeacherSection');
+  var currentTeacherId = null;
+  var studentsLoaded = false;
+
+  function setStudentOnlyFieldsVisible(show) {
+    document.querySelectorAll('.user-view-student-only').forEach(function (node) {
+      node.classList.toggle('d-none', !show);
+    });
+  }
+
+  function resetTeacherStudentsPanel() {
+    currentTeacherId = null;
+    studentsLoaded = false;
+    if (studentsPanel) studentsPanel.classList.add('d-none');
+    if (studentsBody) studentsBody.innerHTML = '';
+    if (studentsEmpty) studentsEmpty.classList.add('d-none');
+    if (studentsToggle) {
+      studentsToggle.innerHTML = '<i class="bi bi-people me-1"></i>Show students';
+      studentsToggle.disabled = false;
+    }
+  }
+
+  function renderTeacherStudents(students) {
+    if (!studentsBody) return;
+    studentsBody.innerHTML = '';
+    if (!students.length) {
+      if (studentsEmpty) studentsEmpty.classList.remove('d-none');
+      return;
+    }
+    if (studentsEmpty) studentsEmpty.classList.add('d-none');
+    students.forEach(function (student) {
+      var row = document.createElement('tr');
+      row.innerHTML =
+        '<td class="fw-medium">' + (student.username || '—') + '</td>' +
+        '<td>' + (student.full_name || '—') + '</td>' +
+        '<td class="text-muted">' + (student.department || '—') + '</td>' +
+        '<td>' + (student.is_active
+          ? '<span class="badge rounded-pill badge-status-approved">Active</span>'
+          : '<span class="badge rounded-pill badge-status-pending">Inactive</span>') + '</td>';
+      studentsBody.appendChild(row);
+    });
+  }
+
+  async function loadTeacherStudents() {
+    if (!currentTeacherId || !window.ReportFlowAPI) return;
+    if (window.ReportFlowLoader) {
+      window.ReportFlowLoader.setButtonLoading(studentsToggle, true, 'Loading…');
+    } else {
+      studentsToggle.disabled = true;
+      studentsToggle.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading…';
+    }
+    try {
+      var result = await window.ReportFlowAPI.apiFetch('/api/v1/users/' + currentTeacherId + '/students/');
+      renderTeacherStudents(result.data || []);
+      studentsLoaded = true;
+      studentsPanel.classList.remove('d-none');
+    } catch (err) {
+      if (window.ReportFlowAPI.showToast) {
+        window.ReportFlowAPI.showToast(
+          window.ReportFlowAPI.formatApiError(err, 'Could not load assigned students'),
+          'error'
+        );
+      }
+      studentsToggle.innerHTML = '<i class="bi bi-people me-1"></i>Show students';
+    } finally {
+      if (window.ReportFlowLoader) {
+        window.ReportFlowLoader.setButtonLoading(studentsToggle, false);
+      } else {
+        studentsToggle.disabled = false;
+      }
+    }
+    if (studentsLoaded && studentsPanel && !studentsPanel.classList.contains('d-none')) {
+      studentsToggle.innerHTML = '<i class="bi bi-chevron-up me-1"></i>Hide students';
+    }
+  }
+
+  userViewModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    resetTeacherStudentsPanel();
+
+    document.getElementById('userViewUsername').textContent = button.getAttribute('data-username') || '—';
+    document.getElementById('userViewName').textContent = button.getAttribute('data-name') || '—';
+    document.getElementById('userViewEmail').textContent = button.getAttribute('data-email') || '—';
+    document.getElementById('userViewRole').textContent = button.getAttribute('data-role') || '—';
+    document.getElementById('userViewDept').textContent = button.getAttribute('data-dept') || '—';
+    document.getElementById('userViewStatus').textContent = button.getAttribute('data-status') || '—';
+
+    var roleValue = button.getAttribute('data-role-value') || '';
+    var isStudent = roleValue === 'student';
+    var isTeacher = roleValue === 'teacher';
+
+    setStudentOnlyFieldsVisible(isStudent);
+    teacherSection.classList.toggle('d-none', !isTeacher);
+
+    if (isStudent) {
+      var teacherName = button.getAttribute('data-teacher-full-name') || button.getAttribute('data-teacher-name') || '';
+      var teacherUsername = button.getAttribute('data-teacher-name') || '';
+      var teacherDisplay = teacherName;
+      if (teacherUsername && teacherName && teacherName !== teacherUsername) {
+        teacherDisplay = teacherName + ' (' + teacherUsername + ')';
+      } else if (teacherUsername && !teacherName) {
+        teacherDisplay = teacherUsername;
+      }
+      document.getElementById('userViewTeacher').textContent = teacherDisplay || 'Not assigned';
+      document.getElementById('userViewRoll').textContent = button.getAttribute('data-roll') || '—';
+    }
+
+    if (isTeacher) {
+      currentTeacherId = button.getAttribute('data-user-id');
+      var studentCount = parseInt(button.getAttribute('data-student-count') || '0', 10);
+      document.getElementById('userViewStudentCount').textContent =
+        studentCount === 1 ? '1 student assigned' : studentCount + ' students assigned';
+      if (studentCount === 0 && studentsToggle) {
+        studentsToggle.disabled = true;
+      }
+    }
+  });
+
+  userViewModal.addEventListener('hidden.bs.modal', resetTeacherStudentsPanel);
+
+  if (studentsToggle) {
+    studentsToggle.addEventListener('click', function () {
+      if (studentsLoaded && !studentsPanel.classList.contains('d-none')) {
+        studentsPanel.classList.add('d-none');
+        studentsToggle.innerHTML = '<i class="bi bi-people me-1"></i>Show students';
+        return;
+      }
+      loadTeacherStudents();
+    });
+  }
+})();
+document.getElementById('userEditModal').addEventListener('show.bs.modal', function (e) {
+  var btn = e.relatedTarget;
+  var form = document.getElementById('userEditForm');
+  form.action = btn.getAttribute('data-update-url');
+  form.setAttribute('data-api-url', btn.getAttribute('data-api-url'));
+  document.getElementById('userEditUsername').textContent = btn.getAttribute('data-username') || '';
+  document.getElementById('userEditFirstName').value = btn.getAttribute('data-first-name') || '';
+  document.getElementById('userEditLastName').value = btn.getAttribute('data-last-name') || '';
+  document.getElementById('userEditEmail').value = btn.getAttribute('data-email') || '';
+  var deptSelect = document.getElementById('userEditDepartment');
+  var dept = btn.getAttribute('data-department') || '';
+  if (dept && !Array.from(deptSelect.options).some(function (opt) { return opt.value === dept; })) {
+    var extraOpt = document.createElement('option');
+    extraOpt.value = dept;
+    extraOpt.textContent = dept;
+    deptSelect.appendChild(extraOpt);
+  }
+  deptSelect.value = dept;
+  if (window.jQuery && jQuery(deptSelect).hasClass('select2-hidden-accessible')) {
+    jQuery(deptSelect).val(deptSelect.value).trigger('change');
+  }
+});
+document.getElementById('userDeleteModal').addEventListener('show.bs.modal', function (e) {
+  var btn = e.relatedTarget;
+  document.getElementById('userDeleteForm').action = btn.getAttribute('data-delete-url');
+  document.getElementById('userDeleteForm').setAttribute('data-api-url', btn.getAttribute('data-api-url'));
+  document.getElementById('userDeleteName').textContent = btn.getAttribute('data-user-name') ? 'User "' + btn.getAttribute('data-user-name') + '"' : 'This user';
+});
+document.getElementById('assignTeacherModal').addEventListener('show.bs.modal', function (e) {
+  var btn = e.relatedTarget;
+  var form = document.getElementById('assignTeacherForm');
+  form.setAttribute('data-api-url', btn.getAttribute('data-api-url'));
+  document.getElementById('assignTeacherStudent').textContent = btn.getAttribute('data-username') || '';
+  var select = document.getElementById('assignTeacherSelect');
+  select.value = btn.getAttribute('data-teacher-id') || '';
+  if (window.jQuery && jQuery(select).hasClass('select2-hidden-accessible')) {
+    jQuery(select).val(select.value).trigger('change');
+  }
+});
+</script>
+{% endblock %}

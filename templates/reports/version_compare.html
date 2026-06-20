@@ -1,0 +1,37 @@
+{% extends 'app_base.html' %}
+{% block title %}Compare versions{% endblock %}
+{% block page_title %}Version compare{% endblock %}
+{% block content %}
+<p class="text-muted small mb-3"><a href="{% url 'reports:detail' report.pk %}">← Back to report</a></p>
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-md-4">
+    <label class="form-label small">Version A</label>
+    <select name="v1" class="form-select rounded-3">
+      <option value="">—</option>
+      {% for v in versions %}
+      <option value="{{ v.pk }}" {% if v1 and v1.pk == v.pk %}selected{% endif %}>v{{ v.version_number }} · {{ v.uploaded_at|date:"M d, Y H:i" }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label small">Version B</label>
+    <select name="v2" class="form-select rounded-3">
+      <option value="">—</option>
+      {% for v in versions %}
+      <option value="{{ v.pk }}" {% if v2 and v2.pk == v.pk %}selected{% endif %}>v{{ v.version_number }} · {{ v.uploaded_at|date:"M d, Y H:i" }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2"><button type="submit" class="btn btn-primary rounded-3 w-100">Compare</button></div>
+</form>
+<div class="row g-2" style="min-height:70vh;">
+  <div class="col-md-6 border rounded-3 p-2 bg-body-secondary bg-opacity-25">
+    <p class="small fw-semibold mb-2">{% if v1 %}Version {{ v1.version_number }}{% else %}Select version A{% endif %}</p>
+    {% if v1 %}<iframe class="w-100 border-0 rounded" style="height:65vh;" src="{{ v1.file.url }}"></iframe>{% endif %}
+  </div>
+  <div class="col-md-6 border rounded-3 p-2 bg-body-secondary bg-opacity-25">
+    <p class="small fw-semibold mb-2">{% if v2 %}Version {{ v2.version_number }}{% else %}Select version B{% endif %}</p>
+    {% if v2 %}<iframe class="w-100 border-0 rounded" style="height:65vh;" src="{{ v2.file.url }}"></iframe>{% endif %}
+  </div>
+</div>
+{% endblock %}

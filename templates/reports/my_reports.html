@@ -1,0 +1,55 @@
+{% extends 'app_base.html' %}
+{% block title %}My reports{% endblock %}
+{% block page_title %}My reports{% endblock %}
+{% block content %}
+<form method="get" class="app-card mb-3">
+  <div class="app-card-body py-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4 col-lg-3">
+        <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+        {{ filter_form.status }}
+      </div>
+      {% include 'partials/rf_table_sort_fields.html' %}
+      {% url 'reports:my_reports' as my_reports_clear_url %}
+      {% include 'partials/rf_filter_actions.html' with clear_url=my_reports_clear_url show_filter_icon=False actions_full_width=True show_filter_label=True %}
+    </div>
+  </div>
+</form>
+<div class="rf-table-panel" data-rf-table="server">
+<div class="app-table-wrap table-responsive">
+  <table class="table table-striped table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Submitted</th>
+        <th>Status</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in page_obj %}
+      <tr>
+        <td><a class="fw-semibold text-decoration-none" href="{% url 'reports:detail' r.pk %}">{{ r.title }}</a></td>
+        <td class="text-muted small">{{ r.submitted_at|date:"M d, Y H:i" }}{% if r.is_late_submission %} <span class="badge badge-status-pending rounded-pill">Late</span>{% endif %}</td>
+        <td>
+          {% if r.status == 'pending' %}
+            {% if r.teacher_approved %}<span class="badge rounded-pill badge-status-pending">Awaiting admin</span>{% else %}<span class="badge rounded-pill badge-status-pending">Pending</span>{% endif %}
+          {% elif r.status == 'approved' %}
+            <span class="badge rounded-pill badge-status-approved">Approved</span>
+          {% else %}
+            <span class="badge rounded-pill badge-status-rejected">Rejected</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary rounded-3" href="{% url 'reports:pdf' r.pk %}" target="_blank" title="Open document"><i class="bi bi-eye"></i></a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center text-muted py-5">No reports yet. <a href="{% url 'reports:submit' %}">Submit one</a>.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include 'partials/pagination.html' with page_obj=page_obj filter_querystring=filter_querystring %}
+</div>
+{% endblock %}

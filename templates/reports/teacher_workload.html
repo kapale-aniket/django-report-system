@@ -1,0 +1,32 @@
+{% extends 'app_base.html' %}
+{% block title %}Workload{% endblock %}
+{% block page_title %}Teacher workload{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}" title="View all assigned reports">
+      <div class="app-stat-label">Total assigned</div>
+      <div class="app-stat-value">{{ total }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=awaiting_teacher" title="Reports awaiting your review">
+      <div class="app-stat-label">Pending your review</div>
+      <div class="app-stat-value text-warning">{{ pending_review }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=awaiting_admin" title="Reports awaiting admin approval">
+      <div class="app-stat-label">Awaiting admin</div>
+      <div class="app-stat-value text-info">{{ awaiting_admin }}</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a class="app-stat-card" href="{% url 'reports:list' %}?status=approved" title="View approved reports">
+      <div class="app-stat-label">Approved</div>
+      <div class="app-stat-value text-success">{{ done }}</div>
+    </a>
+  </div>
+</div>
+<p class="text-muted small">Click a card above to open the filtered report list.</p>
+{% endblock %}

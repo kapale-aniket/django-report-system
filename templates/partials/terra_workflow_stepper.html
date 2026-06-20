@@ -1,0 +1,21 @@
+{% comment %}
+Terra workflow stepper — expects: report (with status, teacher_approved, admin_approved)
+{% endcomment %}
+<div class="terra-workflow" aria-label="Approval workflow">
+  <div class="terra-workflow-step is-done">
+    <span class="terra-workflow-step__num"><i class="bi bi-check-lg"></i></span>
+    Submitted
+  </div>
+  <div class="terra-workflow-step {% if report.teacher_approved %}is-done{% elif report.status == 'pending' %}is-active{% endif %}">
+    <span class="terra-workflow-step__num">{% if report.teacher_approved %}<i class="bi bi-check-lg"></i>{% else %}2{% endif %}</span>
+    Teacher review
+  </div>
+  <div class="terra-workflow-step {% if report.admin_approved %}is-done{% elif report.teacher_approved and report.status == 'pending' %}is-active{% endif %}">
+    <span class="terra-workflow-step__num">{% if report.admin_approved %}<i class="bi bi-check-lg"></i>{% else %}3{% endif %}</span>
+    Admin approval
+  </div>
+  <div class="terra-workflow-step {% if report.status == 'approved' %}is-done is-active{% endif %}">
+    <span class="terra-workflow-step__num">{% if report.status == 'approved' %}<i class="bi bi-award"></i>{% else %}4{% endif %}</span>
+    Certified
+  </div>
+</div>

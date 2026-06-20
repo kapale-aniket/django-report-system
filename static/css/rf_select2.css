@@ -1,0 +1,61 @@
+/* Select2 — Terra theme (ReportFlow) */
+.select2-container--default .select2-selection--single {
+  height: 38px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 36px;
+  padding-left: 0.75rem;
+  color: var(--app-text);
+  font-size: 0.9375rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 36px;
+  right: 6px;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+  border-color: var(--terra-moss);
+  box-shadow: 0 0 0 0.2rem rgba(74, 124, 89, 0.15);
+}
+
+.select2-dropdown {
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow-md);
+}
+
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+  background: var(--terra-forest);
+  color: #fff;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+}
+
+.select2-container {
+  min-width: 140px;
+}
+
+.rf-table-toolbar .select2-container {
+  width: 100% !important;
+}
+
+[data-bs-theme='dark'] .select2-container--default .select2-search--dropdown .select2-search__field {
+  background: var(--app-surface);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+.rf-table-pagination {
+  padding-top: 0.25rem;
+}

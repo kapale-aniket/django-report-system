@@ -1,0 +1,58 @@
+{% extends 'app_base.html' %}
+{% load static %}
+{% block title %}Create project group{% endblock %}
+{% block page_title %}Create project group{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-xl-6">
+    <p class="text-muted mb-4">
+      Pick project mates from your department only. Groups must have
+      <strong>{{ group_rules.min_members }}–{{ group_rules.max_members }}</strong> members (including you).
+      The group will be public after creation. An admin must assign a teacher before anyone can submit.
+    </p>
+    <div class="app-card">
+      <div class="app-card-header">New project group</div>
+      <div class="app-card-body p-4">
+        <form method="post" id="projectGroupCreateForm" novalidate>
+          {% csrf_token %}
+          {{ form.project_mate_ids }}
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="id_name">Group name</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="id_description">Description</label>
+            {{ form.description }}
+            {{ form.description.errors }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="projectMatesSelect">Project mates</label>
+            {% if department_students %}
+            <select id="projectMatesSelect" class="form-select rounded-3" multiple
+                    data-placeholder="Search students in your department…">
+              {% for mate in department_students %}
+              <option value="{{ mate.pk }}">{{ mate.get_full_name|default:mate.username }} ({{ mate.username }})</option>
+              {% endfor %}
+            </select>
+            <p class="small text-muted mb-0 mt-2">You are included automatically as a group member.</p>
+            {% else %}
+            <div class="alert alert-warning mb-0">
+              No other students found in your department. Set your department on your profile or ask an admin to add classmates.
+            </div>
+            {% endif %}
+            {{ form.project_mate_ids.errors }}
+          </div>
+          <button type="submit" class="btn btn-app-primary btn-primary w-100 py-2" {% if not department_students %}disabled{% endif %}>
+            <i class="bi bi-people me-2"></i>Create and publish group
+          </button>
+        </form>
+      </div>
+    </div>
+    <p class="mt-3 mb-0"><a href="{% url 'reports:project_groups' %}">← Back to project groups</a></p>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/project_group_create.js' %}"></script>
+{% endblock %}

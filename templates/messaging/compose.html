@@ -1,0 +1,19 @@
+{% extends 'app_base.html' %}
+{% block title %}Compose{% endblock %}
+{% block page_title %}New message{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="app-card">
+      <div class="app-card-body">
+        <form method="post" class="app-form-loading" data-ajax="true" data-api-url="/api/v1/messages/compose/" data-api-remap="receiver:receiver_id" data-api-redirect="/messages/inbox/">{% csrf_token %}
+          <div class="mb-3"><label class="form-label">To</label>{{ form.receiver }}</div>
+          <div class="mb-3"><label class="form-label">Message</label>{{ form.body }}</div>
+          <button type="submit" class="btn btn-primary rounded-3">Send</button>
+          <a href="{% url 'messaging:inbox' %}" class="btn btn-outline-secondary rounded-3 ms-2">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

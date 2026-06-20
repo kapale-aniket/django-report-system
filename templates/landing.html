@@ -1,0 +1,377 @@
+{% load static rf_ui %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2d5a47">
+  <title>ReportFlow — Project report management</title>
+  <meta name="description" content="Submit, review, approve, and certify project reports for your college.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/terra.css' %}">
+  <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+  <link rel="stylesheet" href="{% static 'css/toast.css' %}">
+  <link rel="stylesheet" href="{% static 'css/loader.css' %}">
+</head>
+<body class="landing-page terra-theme">
+  {% include 'partials/toast_stack.html' %}
+  {% include 'partials/app_loader.html' %}
+  <div class="lp-scroll-progress" id="lpScrollProgress" aria-hidden="true"></div>
+  <div class="lp-ambient" aria-hidden="true">
+    <span class="lp-orb lp-orb--1"></span>
+    <span class="lp-orb lp-orb--2"></span>
+    <span class="lp-orb lp-orb--3"></span>
+    <span class="lp-orb lp-orb--4"></span>
+  </div>
+
+  <header class="lp-header" id="lpNavbar" aria-label="Primary">
+    <div class="container">
+      <div class="lp-header-inner">
+        <a class="lp-brand" href="#top">
+          <span class="lp-logo-mark">RF</span>
+          ReportFlow
+        </a>
+
+        <nav class="lp-nav" aria-label="Sections">
+          <a class="lp-nav-link" href="#features">Features</a>
+          <a class="lp-nav-link" href="#workflow">Workflow</a>
+          <a class="lp-nav-link lp-nav-link--verify" href="{% url 'certificates:verify' %}">Verify certificate</a>
+          <a class="lp-nav-link" href="#qa">Q&amp;A</a>
+        </nav>
+
+        <div class="lp-header-actions">
+          <button type="button" class="app-icon-btn" id="lpThemeToggle" title="Toggle theme" aria-label="Toggle theme">
+            <i class="bi bi-moon-stars-fill"></i>
+          </button>
+          <a class="btn btn-sm btn-outline-secondary rounded-3 d-none d-md-inline-flex" href="{% url 'accounts:login' %}">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Log in
+          </a>
+          <a class="btn btn-sm btn-app-primary btn-primary rounded-3 d-none d-md-inline-flex" href="{% url 'accounts:register_hub' %}">
+            <i class="bi bi-person-plus me-1"></i>Sign up
+          </a>
+          <button type="button" class="lp-menu-btn d-lg-none" id="lpMenuBtn" aria-expanded="false" aria-controls="lpMobileNav" aria-label="Open menu">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <nav class="lp-mobile-nav" id="lpMobileNav" aria-label="Mobile">
+        <a class="lp-nav-link" href="#features">Features</a>
+        <a class="lp-nav-link" href="#workflow">Workflow</a>
+        <a class="lp-nav-link lp-nav-link--verify" href="{% url 'certificates:verify' %}">Verify certificate</a>
+        <a class="lp-nav-link" href="#qa">Q&amp;A</a>
+        <div class="d-flex flex-column gap-2 pt-2">
+          <a class="btn btn-outline-secondary rounded-3" href="{% url 'accounts:login' %}">Log in</a>
+          <a class="btn btn-app-primary btn-primary rounded-3" href="{% url 'accounts:register_hub' %}">Sign up</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  {% include 'partials/messages.html' %}
+
+  <header class="lp-hero" id="top">
+    <div class="lp-hero-glow" aria-hidden="true"></div>
+    <div class="container">
+      <div class="lp-hero-inner lp-reveal text-center">
+        <span class="terra-badge lp-hero-badge"><i class="bi bi-mortarboard"></i> Built for colleges</span>
+        <h1 class="lp-hero-title">Project reports, <span class="lp-accent lp-shimmer">simplified</span></h1>
+        <p class="lp-hero-lead mx-auto">Students submit PDF or DOCX reports, teachers review with rubrics, admins approve — certificates, messaging, and audit trails in one Terra workspace.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+          <a class="btn btn-app-primary btn-primary btn-lg rounded-3 px-4" href="{% url 'accounts:login' %}">Log in</a>
+          <a class="btn btn-outline-secondary btn-lg rounded-3 px-4" href="{% url 'accounts:register_hub' %}">Create account</a>
+          <a class="btn btn-lg rounded-3 px-4 lp-verify-hero-btn" href="{% url 'certificates:verify' %}">
+            <i class="bi bi-qr-code-scan me-1"></i>Verify certificate
+          </a>
+        </div>
+        <p class="lp-hero-note mb-0">New accounts need admin or teacher approval before the first sign-in.</p>
+
+        <ul class="lp-hero-highlights row g-3 mt-5 mb-0 list-unstyled text-start">
+          <li class="col-md-4">
+            <div class="lp-hero-highlight">
+              <i class="bi bi-mortarboard" aria-hidden="true"></i>
+              <div>
+                <strong>Student workspace</strong>
+                <span>Upload reports, track status, and download certificates when approved.</span>
+              </div>
+            </div>
+          </li>
+          <li class="col-md-4">
+            <div class="lp-hero-highlight">
+              <i class="bi bi-easel" aria-hidden="true"></i>
+              <div>
+                <strong>Teacher tools</strong>
+                <span>Rubrics, feedback, and a clear view of every assigned submission.</span>
+              </div>
+            </div>
+          </li>
+          <li class="col-md-4">
+            <div class="lp-hero-highlight">
+              <i class="bi bi-building-check" aria-hidden="true"></i>
+              <div>
+                <strong>Admin oversight</strong>
+                <span>Approve accounts, sign off reports, and review activity across departments.</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <section class="lp-section lp-section--features" id="features">
+    <div class="lp-features-glow" aria-hidden="true"></div>
+    <div class="container position-relative">
+      <div class="text-center">
+        <span class="lp-section-eyebrow lp-reveal">Platform highlights</span>
+        <h2 class="lp-section-title lp-reveal">What you get</h2>
+        <p class="lp-section-sub lp-reveal mx-auto">The same tools you see after login — submission, approval, certificates, and messaging.</p>
+      </div>
+
+      <div class="lp-bubble-field lp-reveal" id="lpBubbleField" aria-label="Platform features">
+        <article class="lp-bubble lp-bubble--tone-forest" style="--bubble-i: 0">
+          <span class="lp-bubble-ring" aria-hidden="true"></span>
+          <span class="lp-bubble-icon"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i></span>
+          <h3 class="lp-bubble-title">Report submissions</h3>
+          <p class="lp-bubble-desc">Validated uploads with deadlines, resubmits, and version history.</p>
+        </article>
+        <article class="lp-bubble lp-bubble--tone-clay" style="--bubble-i: 1">
+          <span class="lp-bubble-ring" aria-hidden="true"></span>
+          <span class="lp-bubble-icon"><i class="bi bi-diagram-3" aria-hidden="true"></i></span>
+          <h3 class="lp-bubble-title">Two-step approval</h3>
+          <p class="lp-bubble-desc">Teacher review, then admin sign-off — matches real department policy.</p>
+        </article>
+        <article class="lp-bubble lp-bubble--tone-gold" style="--bubble-i: 2">
+          <span class="lp-bubble-ring" aria-hidden="true"></span>
+          <span class="lp-bubble-icon"><i class="bi bi-award" aria-hidden="true"></i></span>
+          <h3 class="lp-bubble-title">QR certificates</h3>
+          <p class="lp-bubble-desc">Auto-generated certificates with scannable verification codes.</p>
+        </article>
+        <article class="lp-bubble lp-bubble--tone-moss" style="--bubble-i: 3">
+          <span class="lp-bubble-ring" aria-hidden="true"></span>
+          <span class="lp-bubble-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+          <h3 class="lp-bubble-title">Role dashboards</h3>
+          <p class="lp-bubble-desc">Tailored home for students, teachers, and admins with live stats.</p>
+        </article>
+        <article class="lp-bubble lp-bubble--tone-forest" style="--bubble-i: 4">
+          <span class="lp-bubble-ring" aria-hidden="true"></span>
+          <span class="lp-bubble-icon"><i class="bi bi-envelope" aria-hidden="true"></i></span>
+          <h3 class="lp-bubble-title">Messages &amp; Q&amp;A</h3>
+          <p class="lp-bubble-desc">In-app messaging plus FAQ and help desk for visitors.</p>
+        </article>
+        <article class="lp-bubble lp-bubble--tone-clay" style="--bubble-i: 5">
+          <span class="lp-bubble-ring" aria-hidden="true"></span>
+          <span class="lp-bubble-icon"><i class="bi bi-stars" aria-hidden="true"></i></span>
+          <h3 class="lp-bubble-title">AI-assisted review</h3>
+          <p class="lp-bubble-desc">AI summaries, OCR checks (PDF), and draft rubric suggestions for teachers.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section lp-section--soft" id="workflow">
+    <div class="container">
+      <h2 class="lp-section-title lp-reveal">Project flow</h2>
+      <p class="lp-section-sub lp-reveal">From first upload to verified certificate — four clear steps in your college workflow.</p>
+
+      <div class="lp-workflow lp-reveal" id="lpWorkflow" aria-label="Report submission workflow">
+        <div class="lp-workflow-track" aria-hidden="true">
+          <span class="lp-workflow-track-bg"></span>
+          <span class="lp-workflow-track-fill"></span>
+          <span class="lp-workflow-pulse"></span>
+        </div>
+
+        <ol class="lp-workflow-steps list-unstyled mb-0">
+          <li class="lp-workflow-step" style="--step-i: 0">
+            <article class="lp-workflow-card">
+              <span class="lp-workflow-node">
+                <span class="lp-workflow-num">1</span>
+                <span class="lp-workflow-icon"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i></span>
+              </span>
+              <h3 class="lp-workflow-title">Submit</h3>
+              <p class="lp-workflow-desc">Student uploads a validated PDF or DOCX before the deadline.</p>
+            </article>
+          </li>
+          <li class="lp-workflow-step" style="--step-i: 1">
+            <article class="lp-workflow-card">
+              <span class="lp-workflow-node">
+                <span class="lp-workflow-num">2</span>
+                <span class="lp-workflow-icon"><i class="bi bi-clipboard-check" aria-hidden="true"></i></span>
+              </span>
+              <h3 class="lp-workflow-title">Review</h3>
+              <p class="lp-workflow-desc">Teacher scores with rubrics and leaves feedback.</p>
+            </article>
+          </li>
+          <li class="lp-workflow-step" style="--step-i: 2">
+            <article class="lp-workflow-card">
+              <span class="lp-workflow-node">
+                <span class="lp-workflow-num">3</span>
+                <span class="lp-workflow-icon"><i class="bi bi-patch-check" aria-hidden="true"></i></span>
+              </span>
+              <h3 class="lp-workflow-title">Approve</h3>
+              <p class="lp-workflow-desc">Admin gives final sign-off on the report.</p>
+            </article>
+          </li>
+          <li class="lp-workflow-step" style="--step-i: 3">
+            <article class="lp-workflow-card">
+              <span class="lp-workflow-node">
+                <span class="lp-workflow-num">4</span>
+                <span class="lp-workflow-icon"><i class="bi bi-award" aria-hidden="true"></i></span>
+              </span>
+              <h3 class="lp-workflow-title">Certify</h3>
+              <p class="lp-workflow-desc">Certificate issued with QR verification code.</p>
+            </article>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section lp-section--verify" id="verify">
+    <div class="container">
+      <div class="lp-verify-panel lp-reveal">
+        <div class="lp-verify-glow" aria-hidden="true"></div>
+        <div class="row align-items-center g-4 position-relative">
+          <div class="col-lg-7">
+            <span class="lp-verify-badge"><i class="bi bi-shield-check"></i> Public verification</span>
+            <h2 class="lp-verify-title">Verify any ReportFlow certificate</h2>
+            <p class="lp-verify-lead mb-0">
+              Employers, faculty, and students can confirm authenticity instantly — scan the QR on the certificate PDF
+              or upload a photo of the QR code on the verify page.
+            </p>
+          </div>
+          <div class="col-lg-5">
+            <div class="lp-verify-actions">
+              <a class="btn btn-lg rounded-3 w-100 lp-verify-primary-btn" href="{% url 'certificates:verify' %}">
+                <i class="bi bi-qr-code-scan me-1"></i>Open certificate verify
+              </a>
+              <p class="small mb-0 lp-verify-note">
+                <i class="bi bi-image me-1"></i>Supports QR image upload · No login required
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section" id="qa">
+    <div class="container">
+      <h2 class="lp-section-title lp-reveal">Questions?</h2>
+      <p class="lp-section-sub lp-reveal">Browse FAQs or ask the team — we reply by email.</p>
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="app-card lp-reveal">
+            <div class="app-card-header"><i class="bi bi-journal-text me-2"></i>FAQ</div>
+            <div class="app-card-body">
+              {% if landing_faqs %}
+              <div class="accordion accordion-flush" id="lpFaqAccordion">
+                {% for f in landing_faqs %}
+                <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                  <h3 class="accordion-header m-0">
+                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#lpFaqCol{{ f.pk }}">{{ f.question }}</button>
+                  </h3>
+                  <div id="lpFaqCol{{ f.pk }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#lpFaqAccordion">
+                    <div class="accordion-body small py-2 px-3">{{ f.answer|linebreaks }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <p class="small mb-0" style="color: var(--lp-muted);">No FAQs yet — use the form to reach us.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="app-card terra-panel-accent lp-reveal">
+            <div class="app-card-header"><i class="bi bi-chat-dots me-2"></i>Contact us</div>
+            <div class="app-card-body auth-input-wrap text-center py-4">
+              <p class="small mb-3" style="color: var(--lp-muted);">Questions about submissions, approvals, or sign-in? Send us a message and an administrator will reply by email.</p>
+              <button type="button" class="btn btn-app-primary btn-primary w-100 rounded-3" data-bs-toggle="modal" data-bs-target="#visitorAskModal">
+                <i class="bi bi-chat-left-text me-1"></i>Ask a question
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container pb-5">
+    <div class="terra-cta-panel lp-cta-panel text-center lp-reveal py-5 px-3">
+      <div class="lp-cta-sparkle" aria-hidden="true"></div>
+      <h2 class="h3 fw-bold mb-2">Ready to manage reports?</h2>
+      <p class="mb-3" style="color: var(--lp-muted);">Log in with your college account or register as student / teacher.</p>
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <a class="btn btn-app-primary btn-primary btn-lg rounded-3 px-4" href="{% url 'accounts:login' %}">Log in</a>
+        <a class="btn btn-outline-secondary btn-lg rounded-3 px-4" href="{% url 'accounts:register_hub' %}">Sign up</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="lp-footer">
+    <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-4">
+      <div class="d-flex align-items-center gap-2">
+        <span class="lp-logo-mark">RF</span>
+        <span class="fw-semibold">ReportFlow</span>
+      </div>
+      <p class="small mb-0" style="color: var(--lp-muted);">© {% now "Y" %} ReportFlow · Demo college platform</p>
+      <div class="d-flex gap-3 small">
+        <a href="{% url 'certificates:verify' %}" class="lp-footer-verify-link text-decoration-none fw-semibold">
+          <i class="bi bi-qr-code-scan me-1"></i>Verify certificate
+        </a>
+        <a href="{% url 'accounts:login' %}" class="text-decoration-none">Log in</a>
+        <a href="{% url 'accounts:register_hub' %}" class="text-decoration-none">Sign up</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="modal fade" id="visitorAskModal" tabindex="-1" aria-labelledby="visitorAskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="post" action="{% url 'dashboard:landing' %}" id="visitorAskForm" class="app-form-loading" data-ajax="true" data-api-url="/api/v1/qa/visitor-ask/" data-api-redirect="/#qa">
+          {% csrf_token %}
+          <div class="modal-header border-0">
+            <h5 class="modal-title fw-bold" id="visitorAskModalLabel">Ask a question</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body pt-0 auth-input-wrap">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold" for="{{ visitor_form.name.id_for_label }}">Name <span class="text-muted fw-normal">(optional)</span></label>
+              {{ visitor_form.name }}
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold" for="{{ visitor_form.email.id_for_label }}">Email</label>
+              {{ visitor_form.email }}
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold" for="{{ visitor_form.subject.id_for_label }}">Subject</label>
+              {{ visitor_form.subject }}
+            </div>
+            <div class="mb-0">
+              <label class="form-label small fw-semibold" for="{{ visitor_form.body.id_for_label }}">Question</label>
+              {{ visitor_form.body }}
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" name="visitor_ask_submit" value="1" class="btn btn-app-primary btn-primary rounded-3"><i class="bi bi-send me-1"></i>Send</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'js/toast.js' %}"></script>
+  <script src="{% static 'js/loader.js' %}"></script>
+  <script src="{% static 'js/required_field_labels.js' %}"></script>
+  <script src="{% static 'js/app_modals.js' %}"></script>
+  <script src="{% static 'js/api_client.js' %}"></script>
+  <script src="{% static 'js/landing.js' %}"></script>
+</body>
+</html>

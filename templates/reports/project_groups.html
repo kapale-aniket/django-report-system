@@ -1,0 +1,105 @@
+{% extends 'app_base.html' %}
+{% load static %}
+{% block title %}Project groups{% endblock %}
+{% block page_title %}Project groups{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <p class="text-muted mb-0">Create a group with department mates, then wait for admin to assign a teacher before submitting.</p>
+  <a class="btn btn-app-primary btn-primary rounded-3" href="{% url 'reports:project_group_create' %}">
+    <i class="bi bi-people-fill me-1"></i>Create group
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="app-card h-100">
+      <div class="app-card-header">My groups</div>
+      <div class="app-card-body p-0">
+        {% if my_groups %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Members</th>
+                <th>Teacher</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for group in my_groups %}
+              <tr>
+                <td>
+                  <strong>{{ group.name }}</strong>
+                  <div class="small text-muted">{{ group.department }}</div>
+                </td>
+                <td class="small">
+                  {% for member in group.members.all %}{{ member.get_full_name|default:member.username }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}
+                  <div class="text-muted mt-1">{{ group.member_total|default:group.member_count }} member{{ group.member_total|default:group.member_count|pluralize }}</div>
+                </td>
+                <td>
+                  {% if group.assigned_teacher %}
+                  {{ group.assigned_teacher.get_full_name|default:group.assigned_teacher.username }}
+                  {% else %}
+                  <span class="badge text-bg-warning">Awaiting admin</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if group.has_active_submission %}
+                  <span class="badge text-bg-success">Submitted</span>
+                  {% elif group.assigned_teacher_id %}
+                  <a class="btn btn-sm btn-outline-primary rounded-3" href="{% url 'reports:submit' %}">Submit project</a>
+                  {% else %}
+                  <span class="badge text-bg-secondary">Not ready</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="p-4 mb-0 text-muted">You are not in any project groups yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="app-card h-100">
+      <div class="app-card-header">Public groups</div>
+      <div class="app-card-body p-0">
+        {% if public_groups %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Members</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for group in public_groups %}
+              <tr>
+                <td><strong>{{ group.name }}</strong></td>
+                <td>{{ group.department|default:"—" }}</td>
+                <td class="small">
+                  {% for member in group.members.all %}{{ member.get_full_name|default:member.username }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}
+                  <div class="text-muted mt-1">{{ group.member_total|default:group.member_count }} member{{ group.member_total|default:group.member_count|pluralize }}</div>
+                </td>
+                <td class="small text-muted">{{ group.created_at|date:"M j, Y" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="p-4 mb-0 text-muted">No public groups yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

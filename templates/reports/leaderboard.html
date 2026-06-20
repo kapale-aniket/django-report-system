@@ -1,0 +1,39 @@
+{% extends 'app_base.html' %}
+{% block title %}Leaderboard{% endblock %}
+{% block page_title %}Department leaderboard{% endblock %}
+{% block content %}
+<form method="get" class="app-card mb-3">
+  <div class="app-card-body py-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4 col-lg-3">
+        <label class="form-label small fw-semibold text-muted mb-1">Department</label>
+        <input type="search" name="dept" value="{{ dept_filter }}" class="form-control rounded-3" placeholder="Filter department contains…">
+      </div>
+      {% url 'reports:leaderboard' as leaderboard_clear_url %}
+      {% include 'partials/rf_filter_actions.html' with clear_url=leaderboard_clear_url show_filter_icon=False actions_full_width=True show_filter_label=True %}
+    </div>
+  </div>
+</form>
+<div class="app-card">
+  <div class="rf-table-panel" data-rf-table="client" data-rf-page-size="10">
+  <div class="app-table-wrap table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>#</th><th>Student</th><th>Dept</th><th>Title</th><th>Marks</th></tr></thead>
+      <tbody>
+        {% for r in reports %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ r.student.get_full_name|default:r.student.username }}{% if r.student.roll_number %} · <span class="text-muted small">{{ r.student.roll_number }}</span>{% endif %}</td>
+          <td>{{ r.student.department|default:"—" }}</td>
+          <td><a href="{% url 'reports:detail' r.pk %}">{{ r.title|truncatechars:40 }}</a></td>
+          <td><span class="badge text-bg-success">{{ r.marks }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-muted text-center py-4">No approved reports with marks yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+</div>
+{% endblock %}

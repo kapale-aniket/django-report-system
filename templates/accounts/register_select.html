@@ -1,0 +1,30 @@
+{% extends 'base_auth.html' %}
+{% block title %}Sign up{% endblock %}
+{% block outer %}
+<div class="auth-shell">
+  {% include 'partials/auth_topbar.html' %}
+  <div class="auth-card-portal p-4 p-md-5">
+    <div class="text-center mb-4">
+      <div class="auth-brand-mark mx-auto mb-3">RF</div>
+      <h1 class="auth-portal-title h3 fw-bold mb-2">Create your account</h1>
+      <p class="auth-lead mb-0">Select your role. An administrator must approve your account before you can sign in.</p>
+    </div>
+    <div class="auth-choice-grid auth-choice-grid--2">
+      <a class="auth-choice-card" href="{% url 'accounts:register_student' %}">
+        <span class="auth-choice-icon auth-choice-icon--student"><i class="bi bi-mortarboard" aria-hidden="true"></i></span>
+        <span class="auth-choice-label">Student</span>
+        <span class="auth-choice-hint">Register to submit project reports. Your teacher or admin activates your login.</span>
+      </a>
+      <a class="auth-choice-card" href="{% url 'accounts:register_teacher' %}">
+        <span class="auth-choice-icon auth-choice-icon--teacher"><i class="bi bi-easel2" aria-hidden="true"></i></span>
+        <span class="auth-choice-label">Teacher</span>
+        <span class="auth-choice-hint">Register to review students. Only an administrator can activate your login.</span>
+      </a>
+    </div>
+    <p class="text-center auth-lead small mt-4 mb-0">
+      Already have an account?
+      <a href="{% url 'accounts:login' %}" class="fw-semibold text-decoration-none" style="color: var(--ap-primary);">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

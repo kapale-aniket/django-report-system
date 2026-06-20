@@ -1,0 +1,49 @@
+{% load static %}
+<div class="app-topnav-actions">
+  <a href="{% url 'messaging:inbox' %}" class="app-icon-btn position-relative text-decoration-none" title="Messages" aria-label="Messages">
+    <i class="bi bi-envelope"></i>
+    {% if messaging_unread_count %}
+    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" style="font-size: 0.65rem;">{{ messaging_unread_count }}</span>
+    {% endif %}
+  </a>
+  <div class="dropdown">
+    <button type="button" class="app-icon-btn position-relative" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications" aria-label="Notifications">
+      <i class="bi bi-bell"></i>
+      {% if notification_unread_count %}
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">{{ notification_unread_count }}</span>
+      {% endif %}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow app-mobile-dropdown">
+      <li class="px-3 py-2 small fw-semibold text-muted">Notifications</li>
+      {% for n in recent_notifications %}
+      <li>
+        <a class="dropdown-item small text-wrap {% if not n.is_read %}fw-semibold{% endif %}" href="{% url 'reports:notification_open' n.pk %}">
+          {{ n.message|truncatechars:80 }}
+        </a>
+      </li>
+      {% empty %}
+      <li class="px-3 py-2 small text-muted">No notifications</li>
+      {% endfor %}
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item small" href="{% url 'reports:notifications' %}">View all</a></li>
+    </ul>
+  </div>
+  <button type="button" class="app-icon-btn" data-app-theme-toggle title="Toggle theme" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Toggle dark mode">
+    <i class="bi bi-moon-stars-fill"></i>
+  </button>
+  <div class="app-user-pill d-none d-md-flex app-user-pill--clickable" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#profileModal" title="My profile" aria-label="Open profile settings">
+    {% if user.profile_photo %}
+    <img src="{{ user.profile_photo.url }}" alt="" class="app-user-avatar app-user-avatar--photo" data-rf-nav-avatar="1">
+    {% else %}
+    <span class="app-user-avatar" data-rf-nav-avatar="1">{{ user.get_full_name|default:user.username|slice:":2"|upper }}</span>
+    {% endif %}
+    <span class="text-truncate app-user-name">{{ user.get_full_name|default:user.username }}</span>
+  </div>
+  <div class="app-user-pill app-user-pill--compact app-user-pill--clickable d-md-none" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#profileModal" title="{{ user.get_full_name|default:user.username }}" aria-label="Open profile settings">
+    {% if user.profile_photo %}
+    <img src="{{ user.profile_photo.url }}" alt="" class="app-user-avatar app-user-avatar--photo" data-rf-nav-avatar="1">
+    {% else %}
+    <span class="app-user-avatar" data-rf-nav-avatar="1">{{ user.get_full_name|default:user.username|slice:":2"|upper }}</span>
+    {% endif %}
+  </div>
+</div>

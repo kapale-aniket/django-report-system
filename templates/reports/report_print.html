@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ report.title }}</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 720px; margin: 2rem auto; color: #111; }
+    h1 { font-size: 1.35rem; }
+    .meta { font-size: 0.9rem; color: #444; margin-bottom: 1.5rem; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <p class="no-print"><button type="button" onclick="window.print()">Print</button> · <a href="javascript:history.back()">Back</a></p>
+  <h1>{{ report.title }}</h1>
+  <div class="meta">
+    Student: {{ report.student.get_full_name|default:report.student.username }}
+    {% if report.student.roll_number %}· Roll: {{ report.student.roll_number }}{% endif %}
+    · Submitted {{ report.submitted_at|date:"M d, Y" }}
+    {% if report.academic_year %}· Year {{ report.academic_year }}{% endif %}
+  </div>
+  <p><strong>Status:</strong> {{ report.get_status_display }}{% if report.status_definition %} ({{ report.status_definition.label }}){% endif %}</p>
+  {% if report.marks is not None %}<p><strong>Final marks:</strong> {{ report.marks }}</p>{% endif %}
+  <p class="small text-muted">Generated from ReportFlow — project report system.</p>
+</body>
+</html>

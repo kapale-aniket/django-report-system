@@ -1,0 +1,42 @@
+{% if certificate_celebration %}
+<script id="certCelebrationPayload" type="application/json">{{ certificate_celebration_json }}</script>
+<div id="certCelebrationRoot" class="cert-celebration-root" hidden aria-hidden="true">
+  <div class="cert-celebration-backdrop" aria-hidden="true"></div>
+  <div class="cert-celebration-panel" role="dialog" aria-modal="true" aria-labelledby="certCelebrationTitle">
+    <div class="cert-celebration-panel__glow" aria-hidden="true"></div>
+    <div class="cert-celebration-panel__body">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3" id="certCelebrationClose" aria-label="Close celebration"></button>
+      <div class="cert-celebration-badge" aria-hidden="true">
+        <i class="bi bi-award-fill"></i>
+      </div>
+      <h2 class="cert-celebration-title" id="certCelebrationTitle">Congratulations!</h2>
+      <p class="cert-celebration-subtitle">
+        {% if certificate_celebration.is_group %}
+        Your group project is complete. Your personalized certificate is ready with your name on it.
+        {% else %}
+        Your project is complete. Your official certificate is ready.
+        {% endif %}
+      </p>
+      <div class="cert-celebration-project">
+        <div class="cert-celebration-project__label">Project{% if certificate_celebration.is_group %} · {{ certificate_celebration.group_name }}{% endif %}</div>
+        <p class="cert-celebration-project__title">{{ certificate_celebration.title }}</p>
+        {% if certificate_celebration.marks is not None %}
+        <div class="small text-muted mt-1">Final marks: <strong>{{ certificate_celebration.marks }}</strong>/100</div>
+        {% endif %}
+      </div>
+      <div class="cert-celebration-actions">
+        <a
+          class="btn btn-success btn-lg rounded-3 px-4"
+          id="certCelebrationDownload"
+          href="{{ certificate_celebration.download_url }}"
+          data-rf-download-loader
+          data-loader-message="Preparing your certificate…"
+        >
+          <i class="bi bi-download me-1"></i>Download certificate
+        </a>
+        <button type="button" class="btn btn-outline-secondary rounded-3" id="certCelebrationLater">Maybe later</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
