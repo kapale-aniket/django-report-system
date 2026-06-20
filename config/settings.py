@@ -5,6 +5,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,13 +31,24 @@ SECRET_KEY = _env_setting(
     'django-insecure-!)59-#v8-d$vm9*y%&60$fh)0ch1nzlw#4-c1bf40!fqkm(^ww',
 )
 
-DEBUG = _env_bool('DEBUG', 'true')
+DEBUG = _env_bool('DEBUG', 'false')
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in _env_setting('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    for host in _env_setting('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
     if host.strip()
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in _env_setting('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com').split(',')
+    if origin.strip()
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = _env_bool('SECURE_SSL_REDIRECT', 'false')
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,6 +70,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,6 +118,14 @@ DATABASES = {
     }
 }
 
+DATABASE_URL = _env_setting('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 7}},
@@ -120,6 +141,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -232,8 +261,8 @@ EMAIL_HOST = _env_setting('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(_env_setting('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', 'true')
 EMAIL_USE_SSL = _env_bool('EMAIL_USE_SSL', 'false')
-EMAIL_HOST_USER = _env_setting('EMAIL_HOST_USER', 'backendbyaniket@gmail.com')
-EMAIL_HOST_PASSWORD = _env_setting('EMAIL_HOST_PASSWORD', 'tccrybgdpfstreux').replace(' ', '')
+EMAIL_HOST_USER = _env_setting('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = _env_setting('EMAIL_HOST_PASSWORD').replace(' ', '')
 DEFAULT_FROM_EMAIL = _env_setting(
     'DEFAULT_FROM_EMAIL',
     f'ReportFlow <{EMAIL_HOST_USER}>',
