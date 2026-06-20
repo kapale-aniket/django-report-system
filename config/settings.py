@@ -242,17 +242,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'reportflow.log',
-            'formatter': 'verbose',
-        },
     },
     'loggers': {
-        'reportflow': {'handlers': ['console', 'file'], 'level': 'INFO'},
-        'reportflow.api': {'handlers': ['console', 'file'], 'level': 'INFO'},
-        'reportflow.audit': {'handlers': ['console', 'file'], 'level': 'INFO'},
-        'reportflow.email': {'handlers': ['console', 'file'], 'level': 'INFO'},
+        'reportflow': {'handlers': ['console'], 'level': 'INFO'},
+        'reportflow.api': {'handlers': ['console'], 'level': 'INFO'},
+        'reportflow.audit': {'handlers': ['console'], 'level': 'INFO'},
+        'reportflow.email': {'handlers': ['console'], 'level': 'INFO'},
     },
 }
 
